@@ -1,0 +1,35 @@
+This program is designed to download and analyze an image based on some XML and HTML metadata, then export the information to a XML file for serving over a website. See the bottom for more information.
+
+Current Limitations:
+	-> Can only parse the image one way.
+	-> Can only export to one format.
+	-> Requires a bash script using sed to download the images and parse some
+       of the metadata.
+	-> No configuration for deployment or installation.
+	-> Very little error checking.
+	-> The file is written in ANSI C, so the program is written procedurally
+	   using structures for data.
+
+Since I've been actively reading such excellent books as "The Pragmatic Programmer", "Design Patterns", "Refactoring", etc. I've been trying to improve my effectiveness as a programmer. The original implementation of this program was written before I touched any programming books; hence, why 1) It's written poorly in a simple language (C), and 2) I'd like to improve upon it significantly.
+
+Future Plans:
+	-> Rewrite in a language I haven't learned yet.
+		-> Java? Python? C#? Ruby? Javascript?
+	-> Employ unit testing.
+		-> While this is a small project, I could use the practice.
+	-> Self-contained program (other than the hosting portion [node.js?])
+		-> The original implementation requires a bash script using sed,
+		   curl, and some tricks to update some of the data.
+		   I can probably compress all that into one program.
+	-> Ability to easily switch between output file format.
+		-> Only does non-queryable XML currently; Wiretap has a 
+		   queryable javascript and XML interface.
+	-> Improved error handling.
+		-> Since I'm trying to improve upon the reliability of a current
+		   tool, error handling is kind of important.
+
+---
+Author: Trevor Rice
+Purpose: World World II Online (Battleground Europe) has an API ("Wiretap") that allows developers to get information on the server status, including the status of cities, brigades, etc. Every once in a while, the database that serves the information gets out of sync with the game server, making several web-apps that display the data go static. This program is a simple itch-scratch that takes an image from the Battleground Europe main page (clearly not linked to the database) and parses it to produce an eqivilent Wiretap XML document that displays the ownership of all the cities on the map, potentially giving the web-apps at least some data to work with.
+
+Personally, it's an exercise in improving my skills at programming, since I'm a Chemical Engineer by degree.

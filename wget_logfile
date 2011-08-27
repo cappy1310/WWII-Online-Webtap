@@ -1,0 +1,75 @@
+image_url: Invalid URL map.wwiionline.com/maginot_supply.jpg: Scheme missing
+--2011-07-02 13:08:39--  http://map.wwiionline.com/ne_france_supply.jpg
+Resolving map.wwiionline.com... 66.28.224.229
+Connecting to map.wwiionline.com|66.28.224.229|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 186766 (182K) [image/jpeg]
+Saving to: `data/map.wwiionline.com/ne_france_supply.jpg'
+
+     0K .......... .......... .......... .......... .......... 27%  406K 0s
+    50K .......... .......... .......... .......... .......... 54%  716K 0s
+   100K .......... .......... .......... .......... .......... 82%  729K 0s
+   150K .......... .......... .......... ..                   100%  885K=0.3s
+
+2011-07-02 13:08:40 (612 KB/s) - `data/map.wwiionline.com/ne_france_supply.jpg' saved [186766/186766]
+
+--2011-07-02 13:08:45--  http://map.wwiionline.com/central_german_supply.jpg
+Reusing existing connection to map.wwiionline.com:80.
+HTTP request sent, awaiting response... 200 OK
+Length: 238063 (232K) [image/jpeg]
+Saving to: `data/map.wwiionline.com/central_german_supply.jpg'
+
+     0K .......... .......... .......... .......... .......... 21%  489K 0s
+    50K .......... .......... .......... .......... .......... 43%  753K 0s
+   100K .......... .......... .......... .......... .......... 64%  685K 0s
+   150K .......... .......... .......... .......... .......... 86%  684K 0s
+   200K .......... .......... .......... ..                   100%  724K=0.4s
+
+2011-07-02 13:08:46 (647 KB/s) - `data/map.wwiionline.com/central_german_supply.jpg' saved [238063/238063]
+
+--2011-07-02 13:08:51--  http://map.wwiionline.com/belgium_supply.jpg
+Reusing existing connection to map.wwiionline.com:80.
+HTTP request sent, awaiting response... 200 OK
+Length: 375481 (367K) [image/jpeg]
+Saving to: `data/map.wwiionline.com/belgium_supply.jpg'
+
+     0K .......... .......... .......... .......... .......... 13%  484K 1s
+    50K .......... .......... .......... .......... .......... 27%  749K 0s
+   100K .......... .......... .......... .......... .......... 40%  698K 0s
+   150K .......... .......... .......... .......... .......... 54%  693K 0s
+   200K .......... .......... .......... .......... .......... 68%  679K 0s
+   250K .......... .......... .......... .......... .......... 81%  719K 0s
+   300K .......... .......... .......... .......... .......... 95%  700K 0s
+   350K .......... ......                                     100%  686K=0.6s
+
+2011-07-02 13:08:51 (663 KB/s) - `data/map.wwiionline.com/belgium_supply.jpg' saved [375481/375481]
+
+--2011-07-02 13:08:56--  http://map.wwiionline.com/channel_supply.jpg
+Reusing existing connection to map.wwiionline.com:80.
+HTTP request sent, awaiting response... 200 OK
+Length: 267446 (261K) [image/jpeg]
+Saving to: `data/map.wwiionline.com/channel_supply.jpg'
+
+     0K .......... .......... .......... .......... .......... 19%  492K 0s
+    50K .......... .......... .......... .......... .......... 38%  744K 0s
+   100K .......... .......... .......... .......... .......... 57%  681K 0s
+   150K .......... .......... .......... .......... .......... 76%  708K 0s
+   200K .......... .......... .......... .......... .......... 95%  676K 0s
+   250K .......... .                                          100%  831K=0.4s
+
+2011-07-02 13:08:57 (652 KB/s) - `data/map.wwiionline.com/channel_supply.jpg' saved [267446/267446]
+
+--2011-07-02 13:09:02--  http://map.wwiionline.com/holland_supply.jpg
+Reusing existing connection to map.wwiionline.com:80.
+HTTP request sent, awaiting response... 200 OK
+Length: 134242 (131K) [image/jpeg]
+Saving to: `data/map.wwiionline.com/holland_supply.jpg'
+
+     0K .......... .......... .......... .......... .......... 38%  476K 0s
+    50K .......... .......... .......... .......... .......... 76%  749K 0s
+   100K .......... .......... .......... .                    100%  707K=0.2s
+
+2011-07-02 13:09:02 (608 KB/s) - `data/map.wwiionline.com/holland_supply.jpg' saved [134242/134242]
+
+FINISHED --2011-07-02 13:09:02--
+Downloaded: 5 files, 1.1M in 1.8s (643 KB/s)

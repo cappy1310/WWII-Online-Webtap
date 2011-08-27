@@ -1,0 +1,403 @@
+<html>
+<head>
+<title>WWII Online Map Viewer</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<style TYPE="text/css"> 
+
+<!--
+
+a{text-decoration:none;}
+
+a:hover {text-decoration:underline;} 
+
+//-->
+
+</style>
+<script language="javascript">
+
+var tid			= null;
+var browser		= getBrowser();
+var complete	= false;
+var basename	= '_channel_supply.jpg';
+var current 	= new Image(577,555);
+
+
+function chokepoint(cp){
+   var popup = window.open("http://www.wwiionline.com/scripts/wwiionline/chokepoint.jsp?cp=" + cp, "chokepointWin", 'width=550,height=550,resizable=yes,scrollbars=yes,status=1');
+}
+
+function loadComplete(){
+	complete	= true;
+	current.src = document["sector"].src;
+}
+
+function timeline(getimage){
+	if(complete == true){
+		if(getimage == 0){
+			document["sector"].src = current.src;
+		}
+		else{
+			document["sector"].src = "http://map.wwiionline.com/timeline/" + getimage + basename;
+		}
+	}
+}
+
+
+function showFinder(selector){
+	
+	//alert("Doing " + selector.options[selector.selectedIndex].value);
+	
+	if(selector.options[selector.selectedIndex].value == "")
+		return;
+	
+	var coordinates = selector.options[selector.selectedIndex].value.split(",");
+	
+	//alert("coordinates[0] = " + coordinates[0] + "\ncoordinates[1] = coordinates[1]");
+	
+	var xpos = parseInt(coordinates[0]) + 150; // compensate for side menu
+	var ypos = parseInt(coordinates[1]);
+	
+	xpos -= 25;
+	ypos -= 25;
+	
+	//xpos += 4;
+	//ypos += 4;
+	
+	switch(browser){
+		case "IE":
+			//alert("IE: " + xpos + "," + ypos);
+			document.all.finder.style.top 			= ypos + "px";
+			document.all.finder.style.left 			= xpos + "px";
+			//document.all.finder.style.top 			= xpos;
+			//document.all.finder.style.left 			= ypos;
+			document.all.finder.style.visibility	= "visible";
+			break;
+		case "NN4":
+			//alert("NN4: " + xpos + "," + ypos);
+			document.finder.top 		= ypos;
+			document.finder.left 		= xpos;
+			document.finder.visibility	= "visible";
+			break;
+		case "NN6":
+			//alert("NN6: " + xpos + "," + ypos);
+			document.getElementById("finder").style.top 		= ypos + "px";
+			document.getElementById("finder").style.left 		= xpos + "px";
+			document.getElementById("finder").style.visibility	= "visible";
+			break;
+	}
+	
+	//alert(browser + ": CP Coordinates are " + xpos + "," + ypos + "\nPosition is now " + document.all.finder.style.top + "," + document.all.finder.style.left);
+	
+	if(tid != null)
+		window.clearTimeout(tid);
+	
+	tid 					= window.setTimeout("hideFinder();", 20000);
+	//selector.selectedIndex	= 0;
+}
+
+function hideFinder(){
+	switch(browser){
+		case "IE":
+			document.all.finder.style.visibility	= "hidden";
+			break;
+		case "NN4":
+			document.finder.visibility	= "hidden";
+			break;
+		case "NN6":
+			document.getElementById("finder").style.visibility	= "hidden";
+			break;
+	}
+	
+	//tid = null;
+}
+
+function getBrowser(){
+	if(document.layers){
+	    return "NN4";
+	}
+	if(document.all){
+	     return "IE"
+	}
+	if(!document.all && document.getElementById){
+	     return "NN6";
+	}
+}
+
+
+</script>
+
+<map name="CMAP">
+	<area alt="Abbeville, France" shape="circle" coords="354,361,7" href="javascript:chokepoint('Abbeville');" onMouseOver="window.status='  Abbeville  '; return true">
+	<area alt="Airaines, France" shape="circle" coords="379,390,7" href="javascript:chokepoint('Airaines');" onMouseOver="window.status='  Airaines  '; return true">
+	<area alt="Albert, France" shape="circle" coords="502,382,7" href="javascript:chokepoint('Albert');" onMouseOver="window.status='  Albert  '; return true">
+	<area alt="Amiens, France" shape="circle" coords="438,407,7" href="javascript:chokepoint('Amiens');" onMouseOver="window.status='  Amiens  '; return true">
+	<area alt="Ardres, France" shape="circle" coords="382,190,7" href="javascript:chokepoint('Ardres');" onMouseOver="window.status='  Ardres  '; return true">
+	<area alt="Armentieres, France" shape="circle" coords="544,228,7" href="javascript:chokepoint('Armentieres');" onMouseOver="window.status='  Armentieres  '; return true">
+	<area alt="Arras, France" shape="circle" coords="526,319,7" href="javascript:chokepoint('Arras');" onMouseOver="window.status='  Arras  '; return true">
+	<area alt="Ashford, England" shape="circle" coords="197,117,7" href="javascript:chokepoint('Ashford');" onMouseOver="window.status='  Ashford  '; return true">
+	<area alt="Assigny, France" shape="circle" coords="255,375,7" href="javascript:chokepoint('Assigny');" onMouseOver="window.status='  Assigny  '; return true">
+	<area alt="Aubigny, France" shape="circle" coords="489,304,7" href="javascript:chokepoint('Aubigny');" onMouseOver="window.status='  Aubigny  '; return true">
+	<area alt="Avricourt, France" shape="circle" coords="549,462,7" href="javascript:chokepoint('Avricourt');" onMouseOver="window.status='  Avricourt  '; return true">
+	<area alt="Bailleul, France" shape="circle" coords="521,218,7" href="javascript:chokepoint('Bailleul');" onMouseOver="window.status='  Bailleul  '; return true">
+	<area alt="Bapaume, France" shape="circle" coords="540,361,7" href="javascript:chokepoint('Bapaume');" onMouseOver="window.status='  Bapaume  '; return true">
+	<area alt="Beauvais, France" shape="circle" coords="408,511,7" href="javascript:chokepoint('Beauvais');" onMouseOver="window.status='  Beauvais  '; return true">
+	<area alt="Berck-Plage, France" shape="circle" coords="307,292,7" href="javascript:chokepoint('Berck-Plage');" onMouseOver="window.status='  Berck-Plage  '; return true">
+	<area alt="Bergues, France" shape="circle" coords="463,166,7" href="javascript:chokepoint('Bergues');" onMouseOver="window.status='  Bergues  '; return true">
+	<area alt="Bernay, France" shape="circle" coords="340,325,7" href="javascript:chokepoint('Bernay');" onMouseOver="window.status='  Bernay  '; return true">
+	<area alt="Bertincourt, France" shape="circle" coords="562,365,7" href="javascript:chokepoint('Bertincourt');" onMouseOver="window.status='  Bertincourt  '; return true">
+	<area alt="Bethune, France" shape="circle" coords="501,264,7" href="javascript:chokepoint('Bethune');" onMouseOver="window.status='  Bethune  '; return true">
+	<area alt="Biggin Hill, France" shape="circle" coords="30,87,7" href="javascript:chokepoint('Biggin Hill');" onMouseOver="window.status='  Biggin Hill  '; return true">
+	<area alt="Bouchoir, France" shape="circle" coords="493,446,7" href="javascript:chokepoint('Bouchoir');" onMouseOver="window.status='  Bouchoir  '; return true">
+	<area alt="Boulogne, France" shape="circle" coords="314,218,7" href="javascript:chokepoint('Boulogne');" onMouseOver="window.status='  Boulogne  '; return true">
+	<area alt="Brighton, England" shape="circle" coords="28,199,7" href="javascript:chokepoint('Brighton');" onMouseOver="window.status='  Brighton  '; return true">
+	<area alt="Bruay, France" shape="circle" coords="496,286,7" href="javascript:chokepoint('Bruay');" onMouseOver="window.status='  Bruay  '; return true">
+	<area alt="Calais, Belgium" shape="circle" coords="359,168,7" href="javascript:chokepoint('Calais');" onMouseOver="window.status='  Calais  '; return true">
+	<area alt="Canterbury, England" shape="circle" coords="225,95,7" href="javascript:chokepoint('Canterbury');" onMouseOver="window.status='  Canterbury  '; return true">
+	<area alt="Cassel, France" shape="circle" coords="474,203,7" href="javascript:chokepoint('Cassel');" onMouseOver="window.status='  Cassel  '; return true">
+	<area alt="Cayeux, France" shape="circle" coords="290,343,7" href="javascript:chokepoint('Cayeux');" onMouseOver="window.status='  Cayeux  '; return true">
+	<area alt="Chaulnes, France" shape="circle" coords="533,427,7" href="javascript:chokepoint('Chaulnes');" onMouseOver="window.status='  Chaulnes  '; return true">
+	<area alt="Chuignolles, France" shape="circle" coords="514,407,7" href="javascript:chokepoint('Chuignolles');" onMouseOver="window.status='  Chuignolles  '; return true">
+	<area alt="Clermont, France" shape="circle" coords="461,518,7" href="javascript:chokepoint('Clermont');" onMouseOver="window.status='  Clermont  '; return true">
+	<area alt="Corbie, France" shape="circle" coords="478,390,7" href="javascript:chokepoint('Corbie');" onMouseOver="window.status='  Corbie  '; return true">
+	<area alt="Deal, Belgium" shape="circle" coords="273,106,7" href="javascript:chokepoint('Deal');" onMouseOver="window.status='  Deal  '; return true">
+	<area alt="Derringstone, England" shape="circle" coords="239,113,7" href="javascript:chokepoint('Derringstone');" onMouseOver="window.status='  Derringstone  '; return true">
+	<area alt="Dieppe, France" shape="circle" coords="221,396,7" href="javascript:chokepoint('Dieppe');" onMouseOver="window.status='  Dieppe  '; return true">
+	<area alt="Diksmuide, Belgium" shape="circle" coords="541,151,7" href="javascript:chokepoint('Diksmuide');" onMouseOver="window.status='  Diksmuide  '; return true">
+	<area alt="Doullens, France" shape="circle" coords="447,349,7" href="javascript:chokepoint('Doullens');" onMouseOver="window.status='  Doullens  '; return true">
+	<area alt="Dover, Belgium" shape="circle" coords="261,128,7" href="javascript:chokepoint('Dover');" onMouseOver="window.status='  Dover  '; return true">
+	<area alt="Dungeness, England" shape="circle" coords="185,163,7" href="javascript:chokepoint('Dungeness');" onMouseOver="window.status='  Dungeness  '; return true">
+	<area alt="Dunkerque, France" shape="circle" coords="453,150,7" href="javascript:chokepoint('Dunkerque');" onMouseOver="window.status='  Dunkerque  '; return true">
+	<area alt="Eastbourne, England" shape="circle" coords="71,207,7" href="javascript:chokepoint('Eastbourne');" onMouseOver="window.status='  Eastbourne  '; return true">
+	<area alt="Eastchurch, England" shape="circle" coords="178,71,7" href="javascript:chokepoint('Eastchurch');" onMouseOver="window.status='  Eastchurch  '; return true">
+	<area alt="Escoeuilles, France" shape="circle" coords="371,220,7" href="javascript:chokepoint('Escoeuilles');" onMouseOver="window.status='  Escoeuilles  '; return true">
+	<area alt="Essertaux, France" shape="circle" coords="442,443,7" href="javascript:chokepoint('Essertaux');" onMouseOver="window.status='  Essertaux  '; return true">
+	<area alt="Evivermen, France" shape="circle" coords="249,411,7" href="javascript:chokepoint('Evivermen');" onMouseOver="window.status='  Evivermen  '; return true">
+	<area alt="Faversham, England" shape="circle" coords="182,87,7" href="javascript:chokepoint('Faversham');" onMouseOver="window.status='  Faversham  '; return true">
+	<area alt="Fixecourt, France" shape="circle" coords="396,381,7" href="javascript:chokepoint('Fixecourt');" onMouseOver="window.status='  Fixecourt  '; return true">
+	<area alt="Folkestone, Belgium" shape="circle" coords="235,138,7" href="javascript:chokepoint('Folkestone');" onMouseOver="window.status='  Folkestone  '; return true">
+	<area alt="Foucarmont, France" shape="circle" coords="312,418,7" href="javascript:chokepoint('Foucarmont');" onMouseOver="window.status='  Foucarmont  '; return true">
+	<area alt="Fressenneville, France" shape="circle" coords="310,366,7" href="javascript:chokepoint('Fressenneville');" onMouseOver="window.status='  Fressenneville  '; return true">
+	<area alt="Frevent, France" shape="circle" coords="439,322,7" href="javascript:chokepoint('Frevent');" onMouseOver="window.status='  Frevent  '; return true">
+	<area alt="Fruges, France" shape="circle" coords="410,264,7" href="javascript:chokepoint('Fruges');" onMouseOver="window.status='  Fruges  '; return true">
+	<area alt="Gamaches, France" shape="circle" coords="309,390,7" href="javascript:chokepoint('Gamaches');" onMouseOver="window.status='  Gamaches  '; return true">
+	<area alt="Gravelines, France" shape="circle" coords="409,161,7" href="javascript:chokepoint('Gravelines');" onMouseOver="window.status='  Gravelines  '; return true">
+	<area alt="Hastings, England" shape="circle" coords="131,187,7" href="javascript:chokepoint('Hastings');" onMouseOver="window.status='  Hastings  '; return true">
+	<area alt="Hazebrouck, France" shape="circle" coords="483,219,7" href="javascript:chokepoint('Hazebrouck');" onMouseOver="window.status='  Hazebrouck  '; return true">
+	<area alt="Hesdin, France" shape="circle" coords="392,300,7" href="javascript:chokepoint('Hesdin');" onMouseOver="window.status='  Hesdin  '; return true">
+	<area alt="Hornchurch, France" shape="circle" coords="64,30,7" href="javascript:chokepoint('Hornchurch');" onMouseOver="window.status='  Hornchurch  '; return true">
+	<area alt="Ieper, Belgium" shape="circle" coords="546,191,7" href="javascript:chokepoint('Ieper');" onMouseOver="window.status='  Ieper  '; return true">
+	<area alt="La Bassee, France" shape="circle" coords="531,264,7" href="javascript:chokepoint('La Bassee');" onMouseOver="window.status='  La Bassee  '; return true">
+	<area alt="Le Crotoy, France" shape="circle" coords="321,337,7" href="javascript:chokepoint('Le Crotoy');" onMouseOver="window.status='  Le Crotoy  '; return true">
+	<area alt="Le Touquet, France" shape="circle" coords="321,270,7" href="javascript:chokepoint('Le Touquet');" onMouseOver="window.status='  Le Touquet  '; return true">
+	<area alt="Le Treport, France" shape="circle" coords="278,363,7" href="javascript:chokepoint('Le Treport');" onMouseOver="window.status='  Le Treport  '; return true">
+	<area alt="Lens, France" shape="circle" coords="536,287,7" href="javascript:chokepoint('Lens');" onMouseOver="window.status='  Lens  '; return true">
+	<area alt="Lille, France" shape="circle" coords="578,240,7" href="javascript:chokepoint('Lille');" onMouseOver="window.status='  Lille  '; return true">
+	<area alt="Lillers, France" shape="circle" coords="472,256,7" href="javascript:chokepoint('Lillers');" onMouseOver="window.status='  Lillers  '; return true">
+	<area alt="Liomer, France" shape="circle" coords="357,415,7" href="javascript:chokepoint('Liomer');" onMouseOver="window.status='  Liomer  '; return true">
+	<area alt="Londinieres, France" shape="circle" coords="278,417,7" href="javascript:chokepoint('Londinieres');" onMouseOver="window.status='  Londinieres  '; return true">
+	<area alt="Lumbres, France" shape="circle" coords="406,223,7" href="javascript:chokepoint('Lumbres');" onMouseOver="window.status='  Lumbres  '; return true">
+	<area alt="Lympne, France" shape="circle" coords="209,140,7" href="javascript:chokepoint('Lympne');" onMouseOver="window.status='  Lympne  '; return true">
+	<area alt="Maninghem, France" shape="circle" coords="374,261,7" href="javascript:chokepoint('Maninghem');" onMouseOver="window.status='  Maninghem  '; return true">
+	<area alt="Margate, England" shape="circle" coords="260,71,7" href="javascript:chokepoint('Margate');" onMouseOver="window.status='  Margate  '; return true">
+	<area alt="Marquise, France" shape="circle" coords="332,199,7" href="javascript:chokepoint('Marquise');" onMouseOver="window.status='  Marquise  '; return true">
+	<area alt="Montreuil, France" shape="circle" coords="342,281,7" href="javascript:chokepoint('Montreuil');" onMouseOver="window.status='  Montreuil  '; return true">
+	<area alt="Moreuil, France" shape="circle" coords="464,443,7" href="javascript:chokepoint('Moreuil');" onMouseOver="window.status='  Moreuil  '; return true">
+	<area alt="Noyon, France" shape="circle" coords="569,479,7" href="javascript:chokepoint('Noyon');" onMouseOver="window.status='  Noyon  '; return true">
+	<area alt="Oisemont, France" shape="circle" coords="345,392,7" href="javascript:chokepoint('Oisemont');" onMouseOver="window.status='  Oisemont  '; return true">
+	<area alt="Oostende, Belgium" shape="circle" coords="550,105,7" href="javascript:chokepoint('Oostende');" onMouseOver="window.status='  Oostende  '; return true">
+	<area alt="Peronne, France" shape="circle" coords="555,400,7" href="javascript:chokepoint('Peronne');" onMouseOver="window.status='  Peronne  '; return true">
+	<area alt="Picquigny, France" shape="circle" coords="413,398,7" href="javascript:chokepoint('Picquigny');" onMouseOver="window.status='  Picquigny  '; return true">
+	<area alt="Poix-de-Picardie, France" shape="circle" coords="385,430,7" href="javascript:chokepoint('Poix-de-Picardie');" onMouseOver="window.status='  Poix-de-Picardie  '; return true">
+	<area alt="Poperinge, Belgium" shape="circle" coords="517,190,7" href="javascript:chokepoint('Poperinge');" onMouseOver="window.status='  Poperinge  '; return true">
+	<area alt="Ramsgate, Belgium" shape="circle" coords="279,81,7" href="javascript:chokepoint('Ramsgate');" onMouseOver="window.status='  Ramsgate  '; return true">
+	<area alt="Roye, France" shape="circle" coords="533,452,7" href="javascript:chokepoint('Roye');" onMouseOver="window.status='  Roye  '; return true">
+	<area alt="Rye, England" shape="circle" coords="149,158,7" href="javascript:chokepoint('Rye');" onMouseOver="window.status='  Rye  '; return true">
+	<area alt="Samer, France" shape="circle" coords="339,240,7" href="javascript:chokepoint('Samer');" onMouseOver="window.status='  Samer  '; return true">
+	<area alt="Sandwich, Belgium" shape="circle" coords="265,86,7" href="javascript:chokepoint('Sandwich');" onMouseOver="window.status='  Sandwich  '; return true">
+	<area alt="Saulty, France" shape="circle" coords="483,338,7" href="javascript:chokepoint('Saulty');" onMouseOver="window.status='  Saulty  '; return true">
+	<area alt="Seaford, England" shape="circle" coords="44,205,7" href="javascript:chokepoint('Seaford');" onMouseOver="window.status='  Seaford  '; return true">
+	<area alt="Seclin, France" shape="circle" coords="572,260,7" href="javascript:chokepoint('Seclin');" onMouseOver="window.status='  Seclin  '; return true">
+	<area alt="St.Omer, France" shape="circle" coords="429,214,7" href="javascript:chokepoint('St.Omer');" onMouseOver="window.status='  St.Omer  '; return true">
+	<area alt="St.Pol, France" shape="circle" coords="446,298,7" href="javascript:chokepoint('St.Pol');" onMouseOver="window.status='  St.Pol  '; return true">
+	<area alt="St.Ricquier, France" shape="circle" coords="376,353,7" href="javascript:chokepoint('St.Ricquier');" onMouseOver="window.status='  St.Ricquier  '; return true">
+	<area alt="Talmas, France" shape="circle" coords="443,378,7" href="javascript:chokepoint('Talmas');" onMouseOver="window.status='  Talmas  '; return true">
+	<area alt="Veurne, France" shape="circle" coords="505,141,7" href="javascript:chokepoint('Veurne');" onMouseOver="window.status='  Veurne  '; return true">
+	<area alt="Villers-Bretonneux, France" shape="circle" coords="478,413,7" href="javascript:chokepoint('Villers-Bretonneux');" onMouseOver="window.status='  Villers-Bretonneux  '; return true">
+	<area alt="Vitry-En-Artois, France" shape="circle" coords="563,308,7" href="javascript:chokepoint('Vitry-En-Artois');" onMouseOver="window.status='  Vitry-En-Artois  '; return true">
+	<area alt="Watten, France" shape="circle" coords="424,195,7" href="javascript:chokepoint('Watten');" onMouseOver="window.status='  Watten  '; return true">
+	<area alt="Whitstable, England" shape="circle" coords="202,80,7" href="javascript:chokepoint('Whitstable');" onMouseOver="window.status='  Whitstable  '; return true">
+	<area alt="Winchelsea, England" shape="circle" coords="150,171,7" href="javascript:chokepoint('Winchelsea');" onMouseOver="window.status='  Winchelsea  '; return true">
+	<area alt="Wingham, England" shape="circle" coords="248,90,7" href="javascript:chokepoint('Wingham');" onMouseOver="window.status='  Wingham  '; return true">
+	<area alt="Wissant, France" shape="circle" coords="325,185,7" href="javascript:chokepoint('Wissant');" onMouseOver="window.status='  Wissant  '; return true">
+	<area alt="Woodchurch, England" shape="circle" coords="173,134,7" href="javascript:chokepoint('Woodchurch');" onMouseOver="window.status='  Woodchurch  '; return true">
+</map>
+<map name="THEATRE">
+	<area alt="Holland Sector" shape="rect" coords="71,56,93,77" href="http://map.wwiionline.com/holland_supply.html">
+	<area alt="Belgium Sector" shape="rect" coords="71,77,93,98" href="http://map.wwiionline.com/belgium_supply.html">
+	<area alt="English Channel Sector" shape="rect" coords="49,77,71,98" href="http://map.wwiionline.com/channel_supply.html">
+	<area alt="North Eastern France Sector" shape="rect" coords="71,98,93,119" href="http://map.wwiionline.com/ne_france_supply.html">
+	<area alt="German Sector" shape="rect" coords="91,73,113,96" href="http://map.wwiionline.com/central_german_supply.html">
+	<area alt="Maginot Sector" shape="rect" coords="91,98,113,119" href="http://map.wwiionline.com/maginot_supply.html">
+</map>
+<map name="TIMELINE">
+	<area alt="Current Channel Supply Lines" shape="rect" coords="449,1,576,13" href="javascript:timeline(0);">
+	<area alt="Channel Supply Lines - 1 Hour Ago" shape="rect" coords="335,1,448,14" href="javascript:timeline(1);">
+	<area alt="Channel Supply Lines - 3 Hours Ago" shape="rect" coords="224,1,335,14" href="javascript:timeline(3);">
+	<area alt="Channel Supply Lines - 6 Hours Ago" shape="rect" coords="134,1,224,14" href="javascript:timeline(6);">
+	<area alt="Channel Supply Lines - 12 Hours Ago" shape="rect" coords="57,1,135,14" href="javascript:timeline(12);">
+	<area alt="Channel Supply Lines - 24 Hours Ago" shape="rect" coords="1,1,56,14" href="javascript:timeline(24);">
+</map>
+<META HTTP-EQUIV="expires" CONTENT="Wed, 26 Feb 1997 08:21:57 GMT">
+<META HTTP-EQUIV="Refresh" CONTENT="300">
+</head>
+<body bgcolor="#FFFFFF" link="#CCCC00" vlink="#CCCC00" alink="#CCCC00" marginheight=0 marginwidth=0 topmargin=0 leftmargin=0 rightmargin=0 onLoad="loadComplete();">
+<form>
+<table border="0" cellspacing="0" cellpadding="0" height="570">
+  <tr valign="top"> 
+    <td width="150" background="http://map.wwiionline.com/images/background_greenplate.gif">
+	  <center><img src="http://map.wwiionline.com/channel_sector.gif" width="150" height="56" border="0"></center>
+      <div align="center">
+        <table width="150" border="1" cellspacing="0" cellpadding="0" bgcolor="#666633" bordercolor="#CCCC00">
+          <tr> 
+            <td> 
+		      <center><img src="http://map.wwiionline.com/theatrenav.gif" width="146" height="135" border="0" usemap="#THEATRE"></center>
+            </td>
+          </tr>
+          <tr> 
+            <td> 
+              <div align="center"><font face="Arial, Helvetica, sans-serif" size="1" color="#FFFFFF"><a href="http://map.wwiionline.com/channel_front.html">FRONT LINES</a></font></div>
+            </td>
+          </tr>
+          <tr> 
+            <td> 
+              <div align="center"><font face="Arial, Helvetica, sans-serif" size="1" color="#FFFFFF"><a href="http://map.wwiionline.com/channel_supply.html">SUPPLY LINES </a></font></div>
+            </td>
+          </tr>
+          <tr> 
+            <td> 
+              <div align="center"><font face="Arial, Helvetica, sans-serif" size="1"><a href="http://map.wwiionline.com/channel_strategic.html">STRATEGIC MAP</a></font></div>
+            </td>
+          </tr>
+        </table>
+		<img src="http://map.wwiionline.com/wwiiol_images/blank.gif" width="50" height="6"><br>
+		<center>
+		<select name="selector" id="selector" size="7" onChange="showFinder(this)">
+		<option value="354,361">Abbeville</option>
+		<option value="379,390">Airaines</option>
+		<option value="502,382">Albert</option>
+		<option value="438,407">Amiens</option>
+		<option value="382,190">Ardres</option>
+		<option value="544,228">Armentieres</option>
+		<option value="526,319">Arras</option>
+		<option value="197,117">Ashford</option>
+		<option value="255,375">Assigny</option>
+		<option value="489,304">Aubigny</option>
+		<option value="549,462">Avricourt</option>
+		<option value="521,218">Bailleul</option>
+		<option value="540,361">Bapaume</option>
+		<option value="408,511">Beauvais</option>
+		<option value="307,292">Berck-Plage</option>
+		<option value="463,166">Bergues</option>
+		<option value="340,325">Bernay</option>
+		<option value="562,365">Bertincourt</option>
+		<option value="501,264">Bethune</option>
+		<option value="30,87">Biggin Hill</option>
+		<option value="493,446">Bouchoir</option>
+		<option value="314,218">Boulogne</option>
+		<option value="28,199">Brighton</option>
+		<option value="496,286">Bruay</option>
+		<option value="359,168">Calais</option>
+		<option value="225,95">Canterbury</option>
+		<option value="474,203">Cassel</option>
+		<option value="290,343">Cayeux</option>
+		<option value="533,427">Chaulnes</option>
+		<option value="514,407">Chuignolles</option>
+		<option value="461,518">Clermont</option>
+		<option value="478,390">Corbie</option>
+		<option value="273,106">Deal</option>
+		<option value="239,113">Derringstone</option>
+		<option value="221,396">Dieppe</option>
+		<option value="541,151">Diksmuide</option>
+		<option value="447,349">Doullens</option>
+		<option value="261,128">Dover</option>
+		<option value="185,163">Dungeness</option>
+		<option value="453,150">Dunkerque</option>
+		<option value="71,207">Eastbourne</option>
+		<option value="178,71">Eastchurch</option>
+		<option value="371,220">Escoeuilles</option>
+		<option value="442,443">Essertaux</option>
+		<option value="249,411">Evivermen</option>
+		<option value="182,87">Faversham</option>
+		<option value="396,381">Fixecourt</option>
+		<option value="235,138">Folkestone</option>
+		<option value="312,418">Foucarmont</option>
+		<option value="310,366">Fressenneville</option>
+		<option value="439,322">Frevent</option>
+		<option value="410,264">Fruges</option>
+		<option value="309,390">Gamaches</option>
+		<option value="409,161">Gravelines</option>
+		<option value="131,187">Hastings</option>
+		<option value="483,219">Hazebrouck</option>
+		<option value="392,300">Hesdin</option>
+		<option value="64,30">Hornchurch</option>
+		<option value="546,191">Ieper</option>
+		<option value="531,264">La Bassee</option>
+		<option value="321,337">Le Crotoy</option>
+		<option value="321,270">Le Touquet</option>
+		<option value="278,363">Le Treport</option>
+		<option value="536,287">Lens</option>
+		<option value="578,240">Lille</option>
+		<option value="472,256">Lillers</option>
+		<option value="357,415">Liomer</option>
+		<option value="278,417">Londinieres</option>
+		<option value="406,223">Lumbres</option>
+		<option value="209,140">Lympne</option>
+		<option value="374,261">Maninghem</option>
+		<option value="260,71">Margate</option>
+		<option value="332,199">Marquise</option>
+		<option value="342,281">Montreuil</option>
+		<option value="464,443">Moreuil</option>
+		<option value="569,479">Noyon</option>
+		<option value="345,392">Oisemont</option>
+		<option value="550,105">Oostende</option>
+		<option value="555,400">Peronne</option>
+		<option value="413,398">Picquigny</option>
+		<option value="385,430">Poix-de-Picardie</option>
+		<option value="517,190">Poperinge</option>
+		<option value="279,81">Ramsgate</option>
+		<option value="533,452">Roye</option>
+		<option value="149,158">Rye</option>
+		<option value="339,240">Samer</option>
+		<option value="265,86">Sandwich</option>
+		<option value="483,338">Saulty</option>
+		<option value="44,205">Seaford</option>
+		<option value="572,260">Seclin</option>
+		<option value="429,214">St.Omer</option>
+		<option value="446,298">St.Pol</option>
+		<option value="376,353">St.Ricquier</option>
+		<option value="443,378">Talmas</option>
+		<option value="505,141">Veurne</option>
+		<option value="478,413">Villers-Bretonneux</option>
+		<option value="563,308">Vitry-En-Artois</option>
+		<option value="424,195">Watten</option>
+		<option value="202,80">Whitstable</option>
+		<option value="150,171">Winchelsea</option>
+		<option value="248,90">Wingham</option>
+		<option value="325,185">Wissant</option>
+		<option value="173,134">Woodchurch</option>
+		</select>
+		</center>
+		<img src="http://map.wwiionline.com/wwiiol_images/blank.gif" width="150" height="6"><br>
+        <img src="http://map.wwiionline.com/images/legend_strat.gif" width="150" height="200"><br>
+      </div>
+    </td>
+	<td>
+		<div align="center"><img src="http://map.wwiionline.com/channel_supply.jpg" width="579" height="555" hspace="0" vspace="0" border="0" usemap="#CMAP" name="sector"></div>
+		<div align="center"><img src="http://map.wwiionline.com/map_timeline.gif" width="579" height="15" hspace="0" vspace="0" border="0" usemap="#TIMELINE"></div>
+	</td>
+  </tr>
+</table>
+</form>
+<div id="finder" style="position:absolute;left:0;top:0;visibility:hidden"><a href="javascript:void(0);" onMouseOver="hideFinder();"><img src="http://map.wwiionline.com/circle_arrow.gif" width="50" height="50" border="0"></a></div><!-- ;width:50;height:50; -->
+</body>
+</html>

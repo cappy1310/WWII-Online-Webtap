@@ -1,0 +1,207 @@
+<html>
+<head>
+<title>WWII Online Map Viewer</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<style TYPE="text/css"> 
+
+<!--
+
+a{text-decoration:none;}
+
+a:hover {text-decoration:underline;} 
+
+//-->
+
+</style>
+<script language="javascript">
+
+var tid			= null;
+var browser		= getBrowser();
+var complete	= false;
+var basename	= '_maginot_supply.jpg';
+var current 	= new Image(577,555);
+
+
+function chokepoint(cp){
+   var popup = window.open("http://www.wwiionline.com/scripts/wwiionline/chokepoint.jsp?cp=" + cp, "chokepointWin", 'width=550,height=550,resizable=yes,scrollbars=yes,status=1');
+}
+
+function loadComplete(){
+	complete	= true;
+	current.src = document["sector"].src;
+}
+
+function timeline(getimage){
+	if(complete == true){
+		if(getimage == 0){
+			document["sector"].src = current.src;
+		}
+		else{
+			document["sector"].src = "http://map.wwiionline.com/timeline/" + getimage + basename;
+		}
+	}
+}
+
+
+function showFinder(selector){
+	
+	//alert("Doing " + selector.options[selector.selectedIndex].value);
+	
+	if(selector.options[selector.selectedIndex].value == "")
+		return;
+	
+	var coordinates = selector.options[selector.selectedIndex].value.split(",");
+	
+	//alert("coordinates[0] = " + coordinates[0] + "\ncoordinates[1] = coordinates[1]");
+	
+	var xpos = parseInt(coordinates[0]) + 150; // compensate for side menu
+	var ypos = parseInt(coordinates[1]);
+	
+	xpos -= 25;
+	ypos -= 25;
+	
+	//xpos += 4;
+	//ypos += 4;
+	
+	switch(browser){
+		case "IE":
+			//alert("IE: " + xpos + "," + ypos);
+			document.all.finder.style.top 			= ypos + "px";
+			document.all.finder.style.left 			= xpos + "px";
+			//document.all.finder.style.top 			= xpos;
+			//document.all.finder.style.left 			= ypos;
+			document.all.finder.style.visibility	= "visible";
+			break;
+		case "NN4":
+			//alert("NN4: " + xpos + "," + ypos);
+			document.finder.top 		= ypos;
+			document.finder.left 		= xpos;
+			document.finder.visibility	= "visible";
+			break;
+		case "NN6":
+			//alert("NN6: " + xpos + "," + ypos);
+			document.getElementById("finder").style.top 		= ypos + "px";
+			document.getElementById("finder").style.left 		= xpos + "px";
+			document.getElementById("finder").style.visibility	= "visible";
+			break;
+	}
+	
+	//alert(browser + ": CP Coordinates are " + xpos + "," + ypos + "\nPosition is now " + document.all.finder.style.top + "," + document.all.finder.style.left);
+	
+	if(tid != null)
+		window.clearTimeout(tid);
+	
+	tid 					= window.setTimeout("hideFinder();", 20000);
+	//selector.selectedIndex	= 0;
+}
+
+function hideFinder(){
+	switch(browser){
+		case "IE":
+			document.all.finder.style.visibility	= "hidden";
+			break;
+		case "NN4":
+			document.finder.visibility	= "hidden";
+			break;
+		case "NN6":
+			document.getElementById("finder").style.visibility	= "hidden";
+			break;
+	}
+	
+	//tid = null;
+}
+
+function getBrowser(){
+	if(document.layers){
+	    return "NN4";
+	}
+	if(document.all){
+	     return "IE"
+	}
+	if(!document.all && document.getElementById){
+	     return "NN6";
+	}
+}
+
+
+</script>
+
+<map name="CMAP">
+	<area alt="Boulay, France" shape="circle" coords="46,13,7" href="javascript:chokepoint('Boulay');" onMouseOver="window.status='  Boulay  '; return true">
+	<area alt="Creutzwald-la-Croix, France" shape="circle" coords="79,10,7" href="javascript:chokepoint('Creutzwald-la-Croix');" onMouseOver="window.status='  Creutzwald-la-Croix  '; return true">
+	<area alt="Faulquemont, France" shape="circle" coords="58,49,7" href="javascript:chokepoint('Faulquemont');" onMouseOver="window.status='  Faulquemont  '; return true">
+	<area alt="Raville, France" shape="circle" coords="35,29,7" href="javascript:chokepoint('Raville');" onMouseOver="window.status='  Raville  '; return true">
+	<area alt="St.Avold, France" shape="circle" coords="79,40,7" href="javascript:chokepoint('St.Avold');" onMouseOver="window.status='  St.Avold  '; return true">
+</map>
+<map name="THEATRE">
+	<area alt="Holland Sector" shape="rect" coords="71,56,93,77" href="http://map.wwiionline.com/holland_supply.html">
+	<area alt="Belgium Sector" shape="rect" coords="71,77,93,98" href="http://map.wwiionline.com/belgium_supply.html">
+	<area alt="English Channel Sector" shape="rect" coords="49,77,71,98" href="http://map.wwiionline.com/channel_supply.html">
+	<area alt="North Eastern France Sector" shape="rect" coords="71,98,93,119" href="http://map.wwiionline.com/ne_france_supply.html">
+	<area alt="German Sector" shape="rect" coords="91,73,113,96" href="http://map.wwiionline.com/central_german_supply.html">
+	<area alt="Maginot Sector" shape="rect" coords="91,98,113,119" href="http://map.wwiionline.com/maginot_supply.html">
+</map>
+<map name="TIMELINE">
+	<area alt="Current Maginot Supply Lines" shape="rect" coords="449,1,576,13" href="javascript:timeline(0);">
+	<area alt="Maginot Supply Lines - 1 Hour Ago" shape="rect" coords="335,1,448,14" href="javascript:timeline(1);">
+	<area alt="Maginot Supply Lines - 3 Hours Ago" shape="rect" coords="224,1,335,14" href="javascript:timeline(3);">
+	<area alt="Maginot Supply Lines - 6 Hours Ago" shape="rect" coords="134,1,224,14" href="javascript:timeline(6);">
+	<area alt="Maginot Supply Lines - 12 Hours Ago" shape="rect" coords="57,1,135,14" href="javascript:timeline(12);">
+	<area alt="Maginot Supply Lines - 24 Hours Ago" shape="rect" coords="1,1,56,14" href="javascript:timeline(24);">
+</map>
+<META HTTP-EQUIV="expires" CONTENT="Wed, 26 Feb 1997 08:21:57 GMT">
+<META HTTP-EQUIV="Refresh" CONTENT="300">
+</head>
+<body bgcolor="#FFFFFF" link="#CCCC00" vlink="#CCCC00" alink="#CCCC00" marginheight=0 marginwidth=0 topmargin=0 leftmargin=0 rightmargin=0 onLoad="loadComplete();">
+<form>
+<table border="0" cellspacing="0" cellpadding="0" height="570">
+  <tr valign="top"> 
+    <td width="150" background="http://map.wwiionline.com/images/background_greenplate.gif">
+	  <center><img src="http://map.wwiionline.com/maginot_sector.gif" width="150" height="56" border="0"></center>
+        <div align="center">
+        <table width="150" border="1" cellspacing="0" cellpadding="0" bgcolor="#666633" bordercolor="#CCCC00">
+          <tr> 
+            <td> 
+		      <center><img src="http://map.wwiionline.com/theatrenav.gif" width="146" height="135" border="0" usemap="#THEATRE"></center>
+            </td>
+          </tr>
+          <tr> 
+            <td> 
+              <div align="center"><font face="Arial, Helvetica, sans-serif" size="1" color="#FFFFFF"><a href="http://map.wwiionline.com/maginot_front.html">FRONT LINES</a></font></div>
+            </td>
+          </tr>
+          <tr> 
+            <td> 
+              <div align="center"><font face="Arial, Helvetica, sans-serif" size="1" color="#FFFFFF"><a href="http://map.wwiionline.com/maginot_supply.html">SUPPLY LINES </a></font></div>
+            </td>
+          </tr>
+          <tr> 
+            <td> 
+              <div align="center"><font face="Arial, Helvetica, sans-serif" size="1"><a href="http://map.wwiionline.com/maginot_strategic.html">STRATEGIC MAP</a></font></div>
+            </td>
+          </tr>
+        </table>
+		<img src="http://map.wwiionline.com/wwiiol_images/blank.gif" width="50" height="6"><br>
+		<center>
+		<select name="selector" id="selector" size="7" onChange="showFinder(this)">
+		<option value="46,13">Boulay</option>
+		<option value="79,10">Creutzwald-la-Croix</option>
+		<option value="58,49">Faulquemont</option>
+		<option value="35,29">Raville</option>
+		<option value="79,40">St.Avold</option>
+		</select>
+		</center>
+		<img src="http://map.wwiionline.com/wwiiol_images/blank.gif" width="150" height="6"><br>
+        <img src="http://map.wwiionline.com/images/legend_strat.gif" width="150" height="200"><br>
+      </div>
+    </td>
+	<td>
+		<div align="center"><img src="http://map.wwiionline.com/maginot_supply.jpg" width="579" height="555" hspace="0" vspace="0" border="0" usemap="#CMAP" name="sector"></div>
+		<div align="center"><img src="http://map.wwiionline.com/map_timeline.gif" width="579" height="15" hspace="0" vspace="0" border="0" usemap="#TIMELINE"></div>
+	</td>
+  </tr>
+</table>
+</form>
+<div id="finder" style="position:absolute;left:0;top:0;visibility:hidden"><a href="javascript:void(0);" onMouseOver="hideFinder();"><img src="http://map.wwiionline.com/circle_arrow.gif" width="50" height="50" border="0"></a></div><!-- ;width:50;height:50; -->
+</body>
+</html>
