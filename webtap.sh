@@ -12,4 +12,4 @@ wget -r -w 5 -a wget_logfile --directory-prefix data -i ./data/image_url
 ./image.x
 
 # Format the outputted XML, move it to where others can see it
-sed -e "s/>/>\n/g" -e "s/City-only/\tCity-only/g" -e "s/<def /\t<def /g" -e "s/CP states/CP states\n/g" ./webtap.cpstate.citys.xml>./expose/cpstates.citys.xml
+sed -e "s/>/>\n/g" -e "s/City-only/\tCity-only/g" -e "s/<def /\t<def /g" -e "s/CP states/CP states\n/g" ./webtap.cpstates.citys.xml>./expose/cpstates.citys.xml
