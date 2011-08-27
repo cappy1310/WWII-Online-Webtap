@@ -1,3 +1,34 @@
+----------
+How to Use
+----------
+Current Prerequisites:
+	-> Mini-XML (for XML file writing; not included)
+	-> stb_image (for image processing; source included)
+	-> bash shell with 'sed' and 'wget'
+
+The makefile should compile the executable, "image.x".
+
+The bash script "webtap.sh" runs the rest. In order, it:
+	-> Updates the images to process using wget
+	-> Runs image.x to process the images
+		-> image.x creates the xml file 'webtap.cpstates.citys.xml'
+		   in the directory.
+	-> Pushes the xml file to an web-accessible location on a site
+	   (the folder "expose" currently substitutes that role), for 
+	   download by whoever wants it.
+
+The "data" folder contains any data that image.x uses, along with a script to update the HTML data.
+	-> "cplist.citys.xml" in xml_data/ probably won't change for a few years.
+	-> The HTML data files probably won't change, either.
+	-> There's a script to update the "city_data" file in the html_data folder
+	   from the HTML data files. It's just the HTML data reformatted for input.
+
+	-> The "map.wwiionline.com" folder contains the images that will be used.
+		-> The folder is empty in the git repo, but webtap.sh will d/l them.
+
+-------
+Purpose
+-------
 This program is designed to download and analyze an image based on some XML and HTML metadata, then export the information to a XML file for serving over a website. See the bottom for more information.
 
 Current Limitations:
@@ -10,6 +41,9 @@ Current Limitations:
 	-> The file is written in ANSI C, so the program is written procedurally
 	   using structures for data.
 
+------------
+Future Plans
+------------
 Since I've been actively reading such excellent books as "The Pragmatic Programmer", "Design Patterns", "Refactoring", etc. I've been trying to improve my effectiveness as a programmer. The original implementation of this program was written before I touched any programming books; hence, why 1) It's written poorly in a simple language (C), and 2) I'd like to improve upon it significantly.
 
 Future Plans:
@@ -19,7 +53,7 @@ Future Plans:
 		-> While this is a small project, I could use the practice.
 	-> Self-contained program (other than the hosting portion [node.js?])
 		-> The original implementation requires a bash script using sed,
-		   curl, and some tricks to update some of the data.
+		   wget, and some tricks to update some of the data.
 		   I can probably compress all that into one program.
 	-> Ability to easily switch between output file format.
 		-> Only does non-queryable XML currently; Wiretap has a 
@@ -28,8 +62,18 @@ Future Plans:
 		-> Since I'm trying to improve upon the reliability of a current
 		   tool, error handling is kind of important.
 
----
-Author: Trevor Rice
-Purpose: World World II Online (Battleground Europe) has an API ("Wiretap") that allows developers to get information on the server status, including the status of cities, brigades, etc. Every once in a while, the database that serves the information gets out of sync with the game server, making several web-apps that display the data go static. This program is a simple itch-scratch that takes an image from the Battleground Europe main page (clearly not linked to the database) and parses it to produce an eqivilent Wiretap XML document that displays the ownership of all the cities on the map, potentially giving the web-apps at least some data to work with.
+--------
+About Me
+--------
+Name: Trevor Rice
+Age: 23
+I'm a Chemical Engineer by degree turned developer for a chemical engineering simulation software company. I just graduated college this year ('11) and I'm learning as much as I can about more good programming techniques/how not to be stupid.
 
-Personally, it's an exercise in improving my skills at programming, since I'm a Chemical Engineer by degree.
+I haven't done any public work up until now (I wouldn't really call this public, but..), mainly due to my personal fear that I'm not a very good programmer (it's true), so I'm using this opportunity to design a minor tool for a game I've been playing and work on my coding skills at the same time.
+
+Hopefully this receives a bit of public scrutiny (feedback is welcomed!).
+
+----------------
+Detailed Purpose
+----------------
+Purpose: World World II Online (Battleground Europe) has an API ("Wiretap") that allows developers to get information on the server status, including the status of cities, brigades, etc. Every once in a while, the database that serves the information gets out of sync with the game server, making several web-apps that display the data go static. This program is a simple itch-scratch that takes an image from the Battleground Europe main page (clearly not linked to the database) and parses it to produce an eqivilent Wiretap XML document that displays the ownership of all the cities on the map, potentially giving the web-apps at least some data to work with.
