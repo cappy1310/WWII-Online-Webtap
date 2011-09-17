@@ -1,0 +1,13 @@
+-------------
+Prerequisites
+-------------
+Current Prerequisites:
+	-> Mini-XML (for XML file writing; not included)
+	-> stb_image (for image processing; source included)
+	-> bash shell with 'sed' and 'wget'
+
+----------
+How to Run
+----------
+make
+./scripts/webtap.sh

@@ -1,35 +1,9 @@
-----------
-How to Use
-----------
-Current Prerequisites:
-	-> Mini-XML (for XML file writing; not included)
-	-> stb_image (for image processing; source included)
-	-> bash shell with 'sed' and 'wget'
-
-The makefile should compile the executable, "image.x".
-
-The bash script "webtap.sh" runs the rest. In order, it:
-	-> Updates the images to process using wget
-	-> Runs image.x to process the images
-		-> image.x creates the xml file 'webtap.cpstates.citys.xml'
-		   in the directory.
-	-> Pushes the xml file to an web-accessible location on a site
-	   (the folder "expose" currently substitutes that role), for 
-	   download by whoever wants it.
-
-The "data" folder contains any data that image.x uses, along with a script to update the HTML data.
-	-> "cplist.citys.xml" in xml_data/ probably won't change for a few years.
-	-> The HTML data files probably won't change, either.
-	-> There's a script to update the "city_data" file in the html_data folder
-	   from the HTML data files. It's just the HTML data reformatted for input.
-
-	-> The "map.wwiionline.com" folder contains the images that will be used.
-		-> The folder is empty in the git repo, but webtap.sh will d/l them.
-
 -------
 Purpose
 -------
-This program is designed to download and analyze an image based on some XML and HTML metadata, then export the information to a XML file for serving over a website. See the bottom for more information.
+A script pulls images from the website www.battlegroundeurope.com depicting the gamestate of World War II Online. The program then imports and analyses the images to determine which cities are held by which side. The program then outputs this data into a XML format similar to that of the "Wiretap" API. A script then moves that data into some folder accessible through a website, i.e. the "expose" folder. 
+
+This particular utility is being written because the current Wiretap API has a tendancy to be a bit unstable, rendering tools that depend on its data worthless. Hopefully, I can utilize data that is somehow connected to the map at a lower level (images on the main page) to give the tools some data to work with.
 
 Current Limitations:
 	-> Can only parse the image one way.
@@ -40,11 +14,14 @@ Current Limitations:
 	-> Very little error checking.
 	-> The file is written in ANSI C, so the program is written procedurally
 	   using structures for data.
+	-> No testing.
 
 ------------
 Future Plans
 ------------
-Since I've been actively reading such excellent books as "The Pragmatic Programmer", "Design Patterns", "Refactoring", etc. I've been trying to improve my effectiveness as a programmer. The original implementation of this program was written before I touched any programming books; hence, why 1) It's written poorly in a simple language (C), and 2) I'd like to improve upon it significantly.
+Since I've been actively reading such excellent books as "The Pragmatic Programmer", "Design Patterns", "Refactoring", etc. I've been trying to improve my effectiveness as a programmer. The original implementation of this program was written before I touched any programming books; hence, why 1) It's written poorly in a simple language (C)*, and 2) I'd like to improve upon it significantly.
+
+*Note: If there's any confusion, C is an awesome language. I just suck at it.
 
 Future Plans:
 	-> Rewrite in a language I haven't learned yet.
@@ -72,8 +49,3 @@ I'm a Chemical Engineer by degree turned developer for a chemical engineering si
 I haven't done any public work up until now (I wouldn't really call this public, but..), mainly due to my personal fear that I'm not a very good programmer (it's true), so I'm using this opportunity to design a minor tool for a game I've been playing and work on my coding skills at the same time.
 
 Hopefully this receives a bit of public scrutiny (feedback is welcomed!).
-
-----------------
-Detailed Purpose
-----------------
-Purpose: World World II Online (Battleground Europe) has an API ("Wiretap") that allows developers to get information on the server status, including the status of cities, brigades, etc. Every once in a while, the database that serves the information gets out of sync with the game server, making several web-apps that display the data go static. This program is a simple itch-scratch that takes an image from the Battleground Europe main page (clearly not linked to the database) and parses it to produce an eqivilent Wiretap XML document that displays the ownership of all the cities on the map, potentially giving the web-apps at least some data to work with.
