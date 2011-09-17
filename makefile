@@ -1,5 +1,6 @@
-SRC = stb_image.c webtap.c
-OBJ = stb_image.o webtap.o
+SRC_DIR = source
+SRC = $(SRC_DIR)/stb_image.c $(SRC_DIR)/webtap.c
+OBJ = $(SRC_DIR)/stb_image.o $(SRC_DIR)/webtap.o
 
 all: image.x
 
@@ -7,7 +8,14 @@ image.x : $(OBJ)
 	gcc -lm $(OBJ) -o $@ -lmxml -lpthread
 
 %.o : %.c
-	gcc -c $<
+	gcc -c $< -o $@
+
+test:
+	gcc -lm $(OBJ) -o $@ -lmxml -lpthread -LLIBDIR -Wl,libdir
 
 clean:
-	rm *.o
+	rm -f $(SRC_DIR)/*.o
+
+purge:
+	rm -f $(SRC_DIR)/*.o
+	rm -f image.x
