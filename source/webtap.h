@@ -6,10 +6,13 @@
 #include <stdbool.h>
 #include <curl/curl.h>
 #include <mxml.h>
+#include <json/json.h>
 
 #ifdef LIBTAP
 #include <tap.h>
 #endif
+
+
 
 // Maximum number of characters to a string
 // Note: This is rather arbitrary.
@@ -53,12 +56,12 @@ enum CityArea	// Refers to the 6 different map.wwiionline.com maps
 struct OPTIONS
 {
 	bool enable_timer;
-	unsigned int waitInterval;  // In minutes.
-	unsigned int waitTolerance; // In seconds.
-	bool xmlOutput;
-	bool jsOutput;
-	char imageDownloadPath[MAX_CHAR];
-	char outputFilePath[MAX_CHAR];
+	unsigned int wait_interval;  // In minutes.
+	unsigned int wait_tolerance; // In seconds.
+	bool xml_output;
+	bool json_output;
+	char image_download_path[MAX_CHAR];
+	char output_path[MAX_CHAR];
 };
 
 struct CITY_DATA				// Corresponds to the map.wwiionline.com Maps
@@ -68,6 +71,7 @@ struct CITY_DATA				// Corresponds to the map.wwiionline.com Maps
 	unsigned int y;				// Y coordinate of the city on the map
 	char name[MAX_CHAR];		// Name of the city
 	unsigned short int side;	// Which side the city belongs to: 0 - Unknown, 1 - Allied, 2 - Axis
+	bool contested;				// If the city is contested.
 };
 
 struct CITY								// Corresponds to the cplist.citys.xml <cp> tag and values
@@ -89,6 +93,7 @@ struct CP_STATE
 	unsigned int id;					// The internal ID for the city
 	unsigned short int owner;			// The side that owns the city
 	unsigned short int controller;		// The side that controls the city (slight difference?)
+	bool contested;						// Denotes if the city is contested.
 };
 
 // For the curl call-back.
@@ -111,6 +116,16 @@ int Decide_City_Side(uchar **, struct CITY_DATA *);		// Assigns allied/axis side
 int Match_City_To_Metadata(struct CITY_DATA *, struct CITY *, struct CP_STATE *);	// Finds IDs by matching names
 void Selection_Sort(int, struct CP_STATE *);					// Standard selection sort
 int Append_To_Xml(char const *, struct CP_STATE *, int);		// Write to the XML file
+int Append_To_Json(char *, struct CP_STATE *, int);		// Write to the JSON file
+
+// Helper Functions for Determining if a Color Value Qualifies as a Color
+bool Is_Color_Blue(uchar *, int, int);
+bool Is_Color_Red(uchar *, int, int);
+bool Is_Color_Yellow(uchar *, int, int);
+bool Is_Color_White(uchar *, int, int);
+
+
+// Helper Functions for Calculating the Row-Major Index
 int Get_Red(int, int);
 int Get_Green(int, int);
 int Get_Blue(int, int);

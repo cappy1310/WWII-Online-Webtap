@@ -1,337 +1,403 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <mxml.h>
-#include <time.h>
+#include "webtap.h"
 
-// Maximum number of characters to a string
-// Note: This is rather arbitrary.
-#define MAX_CHAR 255
-// Number of images to be processed
-#define IMAGE_NUM 6
-// Size of each image
-#define IMAGE_X 555
-#define IMAGE_Y 579
-// Number of cities processed from cplist.citys.xml
-#define CITY_NUM 551
-// Number of cities processed from the map.wwiionline.com html files
-#define WEB_CITY_NUM 533
-// These defines make it easier to access the datapoints in the uchar * array from image_load
-// For row-major form of a matrix: X is the row, Y is the column, Z is the total number of columns
-#define R(x,y,z) (x*z+y)*3
-#define G(x,y,z) (x*z+y)*3+1
-#define B(x,y,z) (x*z+y)*3+2
-
-// Files that need to be opened
-#define FILE_IMAGE_LIST "./data/image_url"
-#define FILE_CITY_DATA "./data/html_data/city_data"
-#define FILE_XML_METADATA "./data/xml_data/cplist.citys.xml"
-#define FILE_XML_OUTPUT "./webtap.cpstates.citys.xml"
-
-// Simple error processing.
-#define LOAD_ERROR(x) { printf("Error loading file: %s.\n",x); return 1; }
-
-// Typedefs and Structs
-typedef unsigned char uchar;
-
-struct CITY_DATA				// Corresponds to the map.wwiionline.com Maps
-{
-	unsigned short int area;	// [0-5], refers to which map the city appears in
-								/*	0 - Holland Supply
-								*	1 - Channel Supply
-								*	2 - Belgium Supply
-								*	3 - Central German Supply
-								*	4 - NE France Supply
-								*	5 - Maginot Supply
-								*/	
-	unsigned int x;				// X coordinate of the city on the map
-	unsigned int y;				// Y coordinate of the city on the map
-	char name[MAX_CHAR];		// Name of the city
-	unsigned short int side;	// Which side the city belongs to: 0 - Unknown, 1 - Allied, 2 - Axis
-};
-
-struct CITY								// Corresponds to the cplist.citys.xml <cp> tag and values
-{
-	unsigned int id;					// The internal ID for the city
-	char name[MAX_CHAR];				// The name of the city
-	unsigned short int type;			// Type (bridge, big city, small city, etc.); unused, but imported
-	unsigned short int orig_country;	// The country the city starts a campaign on ()
-	unsigned short int orig_side;		// The side the city starts a campaign on ()
-	unsigned short int links;			// Number of links to other cities
-	signed int x;						// Its x-coordinate
-	signed int y;						// Its y-coordinate
-	signed int x_abs;					// Its x-coordinate
-	signed int y_abs; 					// Its y-coordinate
-};
-
-struct CP_STATE	
-{
-	unsigned int id;					// The internal ID for the city
-	unsigned short int owner;			// The side that owns the city
-	unsigned short int controller;		// The side that controls the city (slight difference?)
-};
-
-// Basic header
-int load_image(char *, int, uchar **);					// Loads an image
-int get_new_image_path(FILE *, char *);					// Gets the next image path from image_list
-int load_webmap_data(char *, struct CITY_DATA *);		// Loads the file city_data
-int load_xml_metadata(char *, struct CITY *);			// Loads the file cplist.citys.xml
-int decide_city_side(uchar **, struct CITY_DATA *);		// Assigns allied/axis side to cities from RGB points
-int match_city_to_metadata(struct CITY_DATA *, struct CITY *, struct CP_STATE *);	// Finds IDs by matching names
-int append_to_xml(char *, struct CP_STATE *, int);		// Write to the XML file
-
-// Debug Headers
-int fake_image(uchar **, int);							// Used to debug the image
-int test_image_data(uchar **);							// Used to debug the image
-
+// Constant Globals
+char const filepath_image_list[MAX_CHAR] = "./data/image_url";
+char const wwiio_image_url[MAX_CHAR] = "http://map.wwiionline.com/";
 
 int main(int argc, char ** argv)
 {
-	FILE * image_list;
-	FILE * xml_file;
-	char cur_image[MAX_CHAR];
-	struct CITY_DATA * webmap_data;
-	struct CITY * xml_metadata;
-	struct CP_STATE * cpstate_data;
-	uchar * image_data[IMAGE_NUM];
-	int i;
-	int cp_state_entries;
-	
-	// Allocate space for data storage
-	webmap_data = (struct CITY_DATA *)malloc(WEB_CITY_NUM * sizeof(struct CITY_DATA));
-	xml_metadata = (struct CITY *)malloc(CITY_NUM * sizeof(struct CITY));
-	
-	// Make sure we can hold all of the cities in cpstate_data
-	if (WEB_CITY_NUM > CITY_NUM)
-	{
-		cpstate_data = (struct CP_STATE *)malloc(WEB_CITY_NUM * sizeof(struct CP_STATE));
-	} else {
-		cpstate_data = (struct CP_STATE *)malloc(CITY_NUM * sizeof(struct CP_STATE));
+	struct OPTIONS option_list;
+	DPRINTF("Args: %d\n", argc);
+	Process_Arguments(argc, argv, &option_list);
+	curl_global_init(CURL_GLOBAL_DEFAULT);
+	DPRINTF("start_while\n");
+	while (true) {
+		if (option_list.enable_timer)
+			Wait_Specific_Interval(option_list);
+		Fetch_Images(option_list);
+		Process_Images(option_list);
+		DPRINTF("continue_while\n");
 	}
+	DPRINTF("end_while\n");
+	curl_global_init(CURL_GLOBAL_DEFAULT);
+}
 
-	// Recursively allocate space for image_data
-	for(i = 0; i < IMAGE_NUM; i++)	
-		image_data[i] = (uchar *)malloc(IMAGE_X * IMAGE_Y * 3 * sizeof(uchar));
+void Process_Arguments(int argc, char ** argv, struct OPTIONS * option_list)
+{
+	int i = 1;
+
+	// Set defaults.
+	option_list->enable_timer = true;
+	strncpy(option_list->image_download_path, "./data/image_data/", MAX_CHAR);
+	strncpy(option_list->output_path, "./expose/", MAX_CHAR);
+	option_list->wait_interval = 15; // minutes
+	option_list->wait_tolerance = 5; // seconds
+	option_list->xml_output = false;
+	option_list->json_output = false;
+
+	// Pull any arguments into the variables.
+	while (i < argc) {
+		if (strcmp(argv[i], "--xml-output") == 0 || strcmp(argv[i], "-xml") == 0) {
+			if (i >= argc)	{
+				return;// INSERT ERROR HERE!
+			}
+			option_list->xml_output = true;
+			DPRINTF("XML Output is%s enabled.\n", option_list->xml_output ? "" : "not");
+		}
+		if (strcmp(argv[i], "--json-output") == 0 || strcmp(argv[i], "-json") == 0) {
+			if (i >= argc)	{
+				return;// INSERT ERROR HERE!
+			}
+			option_list->json_output = true;
+			DPRINTF("JSON Output is%s enabled.\n", option_list->json_output ? "" : "not");
+		}
+		if (strcmp(argv[i], "--enable-timer") == 0 || strcmp(argv[i], "-e") == 0) {
+			if (i + 1 >= argc)	{
+				return;// INSERT ERROR HERE!
+			}
+			option_list->enable_timer = atoi(argv[i + 1]);
+			DPRINTF("Timer is%s enabled.\n", option_list->enable_timer ? "" : "not");
+			++i;
+		}
+		if (strcmp(argv[i], "--output-path") == 0 || strcmp(argv[i], "-o") == 0) {
+			if (i + 1 >= argc) {
+				return;// INSERT ERROR HERE!
+			}
+			strncpy(option_list->output_path, argv[i + 1], MAX_CHAR);
+			DPRINTF("Output path set to: %s.\n", option_list->output_path);
+			++i;
+		}
+		if (strcmp(argv[i], "--wait-tolerance") == 0 || strcmp(argv[i], "-T") == 0) {
+			if (i + 1 >= argc)	{
+				return;// INSERT ERROR HERE!
+			}
+			option_list->wait_tolerance = atoi(argv[i + 1]);
+			DPRINTF("Wait tolerance set to: %d.\n", option_list->wait_tolerance);
+			++i;
+		}
+		if (strcmp(argv[i], "--wait-interval") == 0 || strcmp(argv[i], "-i") == 0) {
+			if (i + 1 >= argc) {
+				return;// INSERT ERROR HERE!
+			}
+			option_list->wait_interval = atoi(argv[i + 1]);
+			DPRINTF("Wait interval set to: %d.\n", option_list->wait_interval);
+			++i;
+		}
+		++i;
+	}
+}
+
+static size_t my_fwrite(void *buffer, size_t size, size_t nmemb, void *stream)
+{
+  struct FTPFile *out = (struct FTPFile *) stream;
+  if (out && !out->stream) {
+    /* open file for writing */
+    out->stream = fopen(out->filename, "wb");
+    if (!out->stream)
+      return -1; /* failure, can't open file to write */
+  }
+  return fwrite(buffer, size, nmemb, out->stream);
+}
+
+void Fetch_Images(struct OPTIONS option_list)
+{
+	int err = 0;
+	char target_url[MAX_CHAR];
+	CURL *curl;
+	CURLcode result;
+	FILE* imageListFileHandle;
+	char  currentImageName[MAX_CHAR];
+	char  ftpOutputPath[MAX_CHAR];
+
+	imageListFileHandle = fopen(filepath_image_list, "r");
+	printf("File handle: %p.\n", imageListFileHandle);
+	for (int i = 0; i < IMAGE_NUM; ++i)	{
+		err = Get_Next_Image_Name(imageListFileHandle, currentImageName);
+		DPRINTF("***Image name: %s.\n", currentImageName);
+		strncpy(target_url, wwiio_image_url, MAX_CHAR);
+		DPRINTF("***Starting out with: %s.\n", target_url);
+		strncat(target_url, currentImageName, MAX_CHAR);
+		DPRINTF("***Appending the above yields: %s.\n", target_url);
+		strncpy(ftpOutputPath, option_list.image_download_path, MAX_CHAR);
+		strncat(ftpOutputPath, currentImageName, MAX_CHAR);
+		struct FTPFile curl_input = { ftpOutputPath, NULL };
+		curl = curl_easy_init();
+		if (curl) {
+			DPRINTF("***Fetching from: %s.\n", target_url);
+			curl_easy_setopt(curl, CURLOPT_URL, target_url);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, my_fwrite);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &curl_input);
+			curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+			result = curl_easy_perform(curl);
+			curl_easy_cleanup(curl);
+			if (CURLE_OK != result) {
+				printf("curl failed unexpectedly; result: %d\n", result);
+				//return 1;
+			}
+			if (curl_input.stream)
+    			fclose(curl_input.stream); 
+		}
+	}
+	fclose(imageListFileHandle);
+}
+
+int Process_Images(struct OPTIONS option_list)
+{
+	FILE 				* imageListFileHandle;
+	char 				  currentImageName[MAX_CHAR];
+	char 				  currentImagePath[MAX_CHAR];
+	struct CITY_DATA 	* webmapDataList;
+	struct CITY 		* xmlMetadataList;
+	struct CP_STATE 	* cpstateDataList;
+	uchar 				* imageData[IMAGE_NUM];
+	int 				  cpstateNumberOfEntries;
+	int err, i;
+	
+	char const filepath_city_data[MAX_CHAR] = "./data/city_data";
+	char const filepath_xml_metadata[MAX_CHAR] = "./data/xml_data/cplist.citys.xml";
+	char const filepath_xml_output[MAX_CHAR] = "./expose/webtap.cpstates.citys.xml";
+	char       filepath_json_output[MAX_CHAR] = "./expose/webtap.cpstates.citys.json";
+
+	// Allocate space for data storage
+	webmapDataList = (struct CITY_DATA *)malloc(WEB_CITY_NUM * sizeof(struct CITY_DATA));
+	xmlMetadataList = (struct CITY *)malloc(CITY_NUM * sizeof(struct CITY));
+	
+	// Make sure we can hold all of the cities in cpstateDataList
+	if (WEB_CITY_NUM > CITY_NUM)
+		cpstateDataList = (struct CP_STATE *)malloc(WEB_CITY_NUM * sizeof(struct CP_STATE));
+	else
+		cpstateDataList = (struct CP_STATE *)malloc(CITY_NUM * sizeof(struct CP_STATE));
+
+	// Recursively allocate space for imageData
+	for (i = 0; i < IMAGE_NUM; ++i)	
+		imageData[i] = (uchar *)malloc(IMAGE_X * IMAGE_Y * 3 * sizeof(uchar));
 	
 	// Load in the list of images to load
-	image_list = fopen(FILE_IMAGE_LIST,"r");
+	imageListFileHandle = fopen(filepath_image_list,"r");
 	
 	// If the file couldn't be opened, quit.
-	if(image_list == NULL)
-		LOAD_ERROR("image_list")
+	if (imageListFileHandle == NULL)
+		FILE_ERROR("imageListFileHandle")
 
-	// Load all the CITY data in from the HTML source
-	if(load_webmap_data(FILE_CITY_DATA, webmap_data) != 0)
-		LOAD_ERROR("city_data")
+	// Load all the CITY data in from the HTML source	
+	err = Load_Webmap_Data_List(filepath_city_data, webmapDataList); 
+	if (err != 0)
+		FILE_ERROR("city_data")
 	
 	// Load all the XML Metadata from the website
-	if(load_xml_metadata(FILE_XML_METADATA, xml_metadata) != 0)
-		LOAD_ERROR("cplist.citys.xml")
+	err = Load_Xml_Metadata_List(filepath_xml_metadata, xmlMetadataList); 
+	if (err != 0)
+		FILE_ERROR("cplist.citys.xml")
 	
 	// Loop through each image
-	for (i = 0; i < IMAGE_NUM; i++)
-	{
-		if(get_next_image_path(image_list, cur_image) != 0)
-			LOAD_ERROR("image_list")
-		if(load_image(cur_image, i, image_data) != 0)
-			LOAD_ERROR("load_image")
+	for (i = 0; i < IMAGE_NUM; ++i)	{
+		err = Get_Next_Image_Name(imageListFileHandle, currentImageName);
+		strncpy(currentImagePath, option_list.image_download_path, MAX_CHAR);
+		strncat(currentImagePath, currentImageName, MAX_CHAR);
+		printf("Grabbing an image from: %s.\n", currentImagePath);
+		if (err != 0)
+			FILE_ERROR("imageListFileHandle")
+
+		err = Load_Image(currentImagePath, i, imageData);
+		if (err != 0)
+			FILE_ERROR("load_image")
 	}
-	
+	DPRINTF("Finished loading images!\n");
 	// Matches RGB color points with sides
-	decide_city_side(image_data, webmap_data);
-	
+	err = Decide_City_Side(imageData, webmapDataList);
+	DPRINTF("Decided the sides!\n");
 	// Compares city names to get ID #s
-	cp_state_entries = match_city_to_metadata(webmap_data, xml_metadata, cpstate_data);
-	
+	cpstateNumberOfEntries = Match_City_To_Metadata(webmapDataList, xmlMetadataList, cpstateDataList);
+	DPRINTF("Matched the cities!\n");
 	// Export to an xml file
-	append_to_xml(FILE_XML_OUTPUT, cpstate_data, cp_state_entries);
-	
+	if (option_list.xml_output)
+		err = Append_To_Xml(filepath_xml_output, cpstateDataList, cpstateNumberOfEntries);
+	DPRINTF("XML Appended!\n");
+	if (option_list.json_output)
+		err = Append_To_Json(filepath_json_output, cpstateDataList, cpstateNumberOfEntries);
 	// Free up mallocated memory
-	for(i = 0; i < IMAGE_NUM; i++)
-		stbi_image_free(image_data[i]);  // Special free() for stbi images
-	free(webmap_data);
-	free(xml_metadata);
-	free(cpstate_data);
+	for (i = 0; i < IMAGE_NUM; ++i)
+		stbi_image_free(imageData[i]);  // Special free() for stbi images
+	free(webmapDataList);
+	free(xmlMetadataList);
+	free(cpstateDataList);
 
 	// Successfully executed; return 0.
 	return 0;
 };
 
-int load_image(char * img_name, int index, uchar ** data)
+int Load_Image(char * image_path, int index, uchar ** image_data)
 {
 	int x,y,n; 		// X-Dim, Y-Dim, and N components of JPEG
 
 	// Fetch image data
-	data[index] = stbi_load(img_name, &x, &y, &n, 0);
-
-	if(data[index] == NULL)
-		LOAD_ERROR("load_image")
+	image_data[index] = stbi_load(image_path, &x, &y, &n, 0);
+	printf("Image path is: %s.\n", image_path);
+	if (image_data[index] == NULL)
+		FILE_ERROR("stbi_load_image")
 	
 	// Success	
 	return 0;
 };
 
-int get_next_image_path(FILE * image_list, char * image_name)
+int Get_Next_Image_Name(FILE * imageListFileHandle, char * image_name)
 {
-	char temp[MAX_CHAR] = "./data/";
-	
 	// Pull the next image location from the file
 	// Should be in the form of: http://map.wwiionline.com/<image_name>.jpg
 	// This pulls off the http:// part
-	if(fscanf(image_list, "http://%s\n", image_name) == EOF)
-		LOAD_ERROR("image_list_loop")
+	if (fscanf(imageListFileHandle, "%s\n", image_name) == EOF)
+		FILE_ERROR("imageListFileHandle_loop")
 
-	// Now we add the ./data/ onto the beginning of the string
-	strncat(temp, image_name, MAX_CHAR);
-
-	// Copy the temp string back into the original
-	strncpy(image_name, temp, MAX_CHAR);
-	
 	return 0;
 };
 
-int load_webmap_data(char * filename, struct CITY_DATA * data)
+int Load_Webmap_Data_List(char const * filename, struct CITY_DATA * city_data)
 {
-	int j;					// Loop var
+	int i = 0;				// Loop var
 	FILE * city_data_file;	// File to open
-	
+	DPRINTF("Load_Webmap_Data_List!\n");
+	DPRINTF("Accessing file: %s\n", filename);
 	// Load the file
 	city_data_file = fopen(filename, "r");
 	
-	j = 0;
-	// Loop through the file
-	while (fscanf(city_data_file, "%hu;(%d,%d);%20[^\n\r]", &(data[j].area), &(data[j].y), &(data[j].x), data[j].name) != EOF)
-	{
+	if (city_data_file == NULL)
+		FILE_ERROR("Load_Webmap_Data_List\n");
+
+	// Capture the data from each city
+	while (fscanf(city_data_file, "%u;(%u,%u);%20[^\n\r]",
+				  &(city_data[i].area), &(city_data[i].x),
+				  &(city_data[i].y), &(city_data[i].name)) != EOF) {
 		// Set the side to the default 0, which will be marked as "Unknown" if the colors don't match anything.
-		data[j].side = 0;
-		j++;
+		city_data[i].side = 0;
+
+		//DPRINTF("Loading Webmap City Data: #%d, Name: %s.\n", i, city_data[i].name);
+		++i;
 	}
+
+	fclose(city_data_file);
 
 	return 0;
 };
 
-int load_xml_metadata(char * xml_metadata_filename, struct CITY * xml_data)
+int Load_Xml_Metadata_List(char const * xmlMetadataList_filename, struct CITY * xml_data)
 {
-	FILE * xml_metadata_file;	// File to open
+	FILE * xmlMetadataList_file;	// File to open
 	int j;						// Loop var
 	char temp[MAX_CHAR];		// Temporary string to hold the first 3 lines
-	
+	char format[MAX_CHAR];		// Parsing format
+
+	DPRINTF("Load_XML_Metadata_List!\n");
 	// Load the file
-	xml_metadata_file = fopen(xml_metadata_filename, "r");
+	xmlMetadataList_file = fopen(xmlMetadataList_filename, "r");
 	
-	// The first 3 lines are unnecessary
-	for(j = 0; j < 3; j++)
-		fgets(temp, MAX_CHAR, xml_metadata_file);
+	// The first 3 lines are metadata.
+	for (j = 0; j < 3; ++j)
+		fgets(temp, MAX_CHAR, xmlMetadataList_file);
 	
 	// The xml data contains date and time info, which could be used to construct a "Recently Captured Towns" list.
 	// Scan in all of the data from the cplist.citys.xml file.
-	for(j = 0; j < CITY_NUM; j++)
-	{
+	strncpy(format, "<cp id=\"%d\" name=\"%20[^\"\n\r]\" type=\"%hu\" orig-country=\"%hu\" orig-side=\"%hu\" links=\"%hu\" x=\"%d\" y=\"%d\" absx=\"%d\" absy=\"%d\"/>\n", MAX_CHAR);
+	for (j = 0; j < CITY_NUM; ++j) {
 		// Scan the entire thing in at once. 
 		// Note: [^\"\n\r] is necessary, as %s will grab the rest of the input and store it as a string.
 		// 		 Also, the \r will really mess things up if it grabs it.
-		fscanf(xml_metadata_file, "<cp id=\"%d\" name=\"%20[^\"\n\r]\" type=\"%hu\" orig-country=\"%hu\" orig-side=\"%hu\" links=\"%hu\" x=\"%d\" y=\"%d\" absx=\"%d\" absy=\"%d\"/>\n", &(xml_data[j].id), xml_data[j].name, &(xml_data[j].type), &(xml_data[j].orig_country), &(xml_data[j].orig_side), &(xml_data[j].links), &(xml_data[j].x), &(xml_data[j].y), &(xml_data[j].x_abs), &(xml_data[j].y_abs));
-		// DEBUG
-		//printf("%d: Name: %s, ID: %d, AbsX: %d, AbsY: %d, Type: %hu, Links: %hu, OC: %hu, OS: %hu\n", j, xml_data[j].name, xml_data[j].id, xml_data[j].x_abs, xml_data[j].y_abs, xml_data[j].type, xml_data[j].links, xml_data[j].orig_country, xml_data[j].orig_side);
+		fscanf( xmlMetadataList_file, format, 
+				&(xml_data[j].id), xml_data[j].name, &(xml_data[j].type), 
+				&(xml_data[j].orig_country), &(xml_data[j].orig_side), 
+				&(xml_data[j].links), &(xml_data[j].x), &(xml_data[j].y), 
+				&(xml_data[j].x_abs), &(xml_data[j].y_abs));
+		DPRINTF("%d: Name: %s, ID: %d, AbsX: %d, AbsY: %d, Type: %hu, Links: %hu, OC: %hu, OS: %hu\n", j, xml_data[j].name, xml_data[j].id, xml_data[j].x_abs, xml_data[j].y_abs, xml_data[j].type, xml_data[j].links, xml_data[j].orig_country, xml_data[j].orig_side);
 	}
+
+	// Close file
+	fclose(xmlMetadataList_file);
 
 	return 0;
 };
 
-int decide_city_side(uchar ** image_data, struct CITY_DATA * webmap_data)
+int Decide_City_Side(uchar ** imageData, struct CITY_DATA * webmapDataList)
 {
-	int x, y, i;
+	int x, y, i, area_index = 0;
 	char s[8];
-	
+
 	// Loop through all the cities from the map.wwiionline list.
-	for(i = 0; i < WEB_CITY_NUM; i++)
-	{
+	for (i = 0; i < WEB_CITY_NUM; ++i) {
 		// Store the x and y-coords
-		x = webmap_data[i].x;
-		y = webmap_data[i].y;
-		
+		x = webmapDataList[i].x;
+		y = webmapDataList[i].y;
+		area_index = webmapDataList[i].area - 1;
 		// Check the color of the city on the map
 		// Blue and White (contested) represent Allied cities.
 		// Red and Yellow (contested) represent Axis cities.
 		// Potential support for determining if the cities are British/French using the Strat maps in the future.
-		// -> area - 1 is used as the webmap_data sides range from 1-6, while the image_data goes from 0-5
-		if((image_data[webmap_data[i].area - 1])[R(x,y,IMAGE_Y)] > 220 &&
-		   (image_data[webmap_data[i].area - 1])[G(x,y,IMAGE_Y)] > 220 &&
-		   (image_data[webmap_data[i].area - 1])[B(x,y,IMAGE_Y)] > 220) // White
-		{
+		// -> area - 1 is used as the webmapDataList sides range from 1-6, while the imageData goes from 0-5
+		if (Is_Color_White(imageData[area_index], x, y)) {
 			// The color white! This indicates a contested Allied city.
-			webmap_data[i].side = 1;
+			webmapDataList[i].side = 1;
+			webmapDataList[i].contested = true;
 			strncpy(s,"Allied\0", 8);
-		}
-		else if((image_data[webmap_data[i].area - 1])[R(x,y,IMAGE_Y)] > 220 &&
-		   		(image_data[webmap_data[i].area - 1])[G(x,y,IMAGE_Y)] > 220 &&
-		   		(image_data[webmap_data[i].area - 1])[B(x,y,IMAGE_Y)] < 220) // Yellow
-		{
+		} else if (Is_Color_Yellow(imageData[area_index], x, y)) {
 			// The color yellow! This indicates a contested Axis city.
-			webmap_data[i].side = 2;
+			webmapDataList[i].side = 2;
+			webmapDataList[i].contested = true;			
 			strncpy(s,"Allied\0", 8);
-		}
-		else if((image_data[webmap_data[i].area - 1])[R(x,y,IMAGE_Y)] > 220 &&
-		   		(image_data[webmap_data[i].area - 1])[G(x,y,IMAGE_Y)] < 220 &&
-		   		(image_data[webmap_data[i].area - 1])[B(x,y,IMAGE_Y)] < 220) // Red
-		{
+		} else if (Is_Color_Red(imageData[area_index], x, y)) {
 			// If it is very red, to the AXIS it goes
-			webmap_data[i].side = 2;
+			webmapDataList[i].side = 2;
+			webmapDataList[i].contested = false;
 			strncpy(s,"Axis\0", 8);
-		}
-		else if((image_data[webmap_data[i].area - 1])[R(x,y,IMAGE_Y)] < 220 &&
-		   		(image_data[webmap_data[i].area - 1])[G(x,y,IMAGE_Y)] < 220 &&
-		   		(image_data[webmap_data[i].area - 1])[B(x,y,IMAGE_Y)] > 220) // Blue
-		{
+		} else if (Is_Color_Blue(imageData[area_index], x, y)) {
 			// Blue! Another ALLIED town, it is!
-			webmap_data[i].side = 1;
+			webmapDataList[i].side = 1;
+			webmapDataList[i].contested = false;
 			strncpy(s,"Allied\0", 8);
-		}
-		else
-		{
+		} else {
 			// Otherwise, fuck. Uh...mark it as unknown and deal with it. Won't list it in the xml output, at least.
-			webmap_data[i].side = 0;
+			webmapDataList[i].side = 0;
+			webmapDataList[i].contested = false;
 			strncpy(s,"Unknown\0", 8);
 		}
-		// DEBUG
-		//printf("The city %s at {%d,%d} has %u red, %u green, and %u blu and is %s=%d.\n", webmap_data[i].name, webmap_data[i].x, webmap_data[i].y, (image_data[webmap_data[i].area-1])[R(x,y,IMAGE_Y)], (image_data[webmap_data[i].area-1])[G(x,y,IMAGE_Y)], (image_data[webmap_data[i].area-1])[B(x,y,IMAGE_Y)], s, webmap_data[i].side); 
+		DPRINTF("%s {%d,%d}: Color: %s. Result: %s=%d. %sontested.\n", 
+			webmapDataList[i].name, webmapDataList[i].x, webmapDataList[i].y,
+			Is_Color_Blue(imageData[webmapDataList[i].area-1], x ,y) ? "Blue" : 
+			Is_Color_Red(imageData[webmapDataList[i].area-1], x ,y) ? "Red" : 
+			Is_Color_Yellow(imageData[webmapDataList[i].area-1], x ,y) ? "Yellow" :
+			Is_Color_White(imageData[webmapDataList[i].area-1], x ,y) ? "White" : "Unknown",
+			s, webmapDataList[i].side, webmapDataList[i].contested ? "C" : "Unc"); 
 	}
 
 	return 0;
 }
 
-int match_city_to_metadata(struct CITY_DATA * webmap_data, struct CITY * xml_metadata, struct CP_STATE * cpstate_data)
+int Match_City_To_Metadata(struct CITY_DATA * webmapDataList, struct CITY * xmlMetadataList, struct CP_STATE * cpstateDataList)
 {
 	int i,j,cp;
-	int willem;
-	int key;		// For sort algorith
+	int willem;		// Deal with an exception involving the city of Willemstad.
 	
 	willem = 0;
 	cp = 0;
 	// Looping through every permutation of the data sets. Not the best way, but it'll do for now.
-	for(i = 0; i < WEB_CITY_NUM; i++)
-	{
-		for(j = 0; j < CITY_NUM; j++)
-		{
-			if (xml_metadata[j].id == 311 && willem == 1) // Willemstad
-				continue;	// This fixes an issue where Willemstad is listed twice in the webmap.
+	for (i = 0; i < WEB_CITY_NUM; ++i) {
+		for (j = 0; j < CITY_NUM; ++j) {
+			if (xmlMetadataList[j].id == 311 && willem == 1) // Willemstad
+				continue;	// This fixes an issue where Willemstad is listed twice in the HTML.
 			
 			// Compare the names of the two cities.
-			if(strcmp(webmap_data[i].name, xml_metadata[j].name) == 0)
-			{
+			if (strcmp(webmapDataList[i].name, xmlMetadataList[j].name) == 0) {
 				// If they're similar, we have a match!
 				// Since cpstate.citys.xml only lists non-default cities, check
 				//		if the original side is the same as the current side.
 				// Also, make sure it has a side to begin with. Otherwise, we don't want to list it.
-				if(xml_metadata[j].orig_side != webmap_data[i].side && webmap_data[i].side != 0)
-				{
-					// The CP State is non-default! Store all its data in cpstate_data.
-					cpstate_data[cp].id = xml_metadata[j].id;
-					cpstate_data[cp].owner = webmap_data[i].side;
-					cpstate_data[cp].controller = webmap_data[i].side;
-					cp++;
+				if (xmlMetadataList[j].orig_side != webmapDataList[i].side && 
+				    webmapDataList[i].side != 0) {
+					// The CP State is non-default! Store all its data in cpstateDataList.
+					cpstateDataList[cp].id = xmlMetadataList[j].id;
+					cpstateDataList[cp].owner = webmapDataList[i].side;
+					cpstateDataList[cp].controller = webmapDataList[i].side;
+					cpstateDataList[cp].contested = webmapDataList[i].contested;
+					++cp;
 					
-					if(strcmp(webmap_data[i].name, "Willemstad") == 0)
+					if (strcmp(webmapDataList[i].name, "Willemstad") == 0)
 						willem = 1;
 				}
 			}
@@ -339,31 +405,86 @@ int match_city_to_metadata(struct CITY_DATA * webmap_data, struct CITY * xml_met
 	}
 	
 	// Sort the data by ID (Selection sort)
-	for(j = 0; j < cp; j++)
-	{
-		key = cpstate_data[j].id;
-		i = j - 1;
-		while(i >= 0 && cpstate_data[i].id > key)
-		{
-			cpstate_data[i + 1].id = cpstate_data[i].id;
-			i = i - 1;
-		}
-		cpstate_data[i + 1].id = key;
-		cpstate_data[i + 1].owner = cpstate_data[j].owner;
-		cpstate_data[i + 1].controller = cpstate_data[j].controller;
-	}
+	Selection_Sort(cp, cpstateDataList);
 
 	// DEBUG
-	//printf("CP State Listing:\n");
-	//for(i = 0; i < cp; i++)
-	//	printf("ID: %u, Owner: %hu, Controller: %hu\n",cpstate_data[i].id, cpstate_data[i].owner, cpstate_data[i].controller);
+#ifdef DEBUG
+	printf("CP State Listing:\n");
+	for (i = 0; i < cp; ++i)
+		printf("ID: %u, Owner: %hu, Controller: %hu, Contested: %s\n", 
+			cpstateDataList[i].id, cpstateDataList[i].owner, 
+			cpstateDataList[i].controller, cpstateDataList[i].contested ? "y" : "n");
+#endif
 
 	// Return the number of cities not in their default state	
 	return cp;
 }
 
-int append_to_xml(char * xml_filename, struct CP_STATE * cp_data, int cp_state_num)
+/* Helper functions for determining the color of the cities from the image color data. */
+bool Is_Color_Blue(uchar * image_data, int x, int y)
 {
+	return (image_data[Get_Red(x,y)] < MINIMUM_COLOR_VALUE &&
+			image_data[Get_Green(x,y)] < MINIMUM_COLOR_VALUE &&
+			image_data[Get_Blue(x,y)] > MINIMUM_COLOR_VALUE);
+}
+
+bool Is_Color_Red(uchar * image_data, int x, int y)
+{
+	return (image_data[Get_Red(x,y)] > MINIMUM_COLOR_VALUE &&
+			image_data[Get_Green(x,y)] < MINIMUM_COLOR_VALUE &&
+			image_data[Get_Blue(x,y)] < MINIMUM_COLOR_VALUE);
+}
+
+bool Is_Color_Yellow(uchar * image_data, int x, int y)
+{
+	return (image_data[Get_Red(x,y)] > MINIMUM_COLOR_VALUE &&
+			image_data[Get_Green(x,y)] > MINIMUM_COLOR_VALUE &&
+			image_data[Get_Blue(x,y)] < MINIMUM_COLOR_VALUE);
+}
+
+bool Is_Color_White(uchar * image_data, int x, int y)
+{
+	return (image_data[Get_Red(x,y)] > MINIMUM_COLOR_VALUE &&
+			image_data[Get_Green(x,y)] > MINIMUM_COLOR_VALUE &&
+			image_data[Get_Blue(x,y)] > MINIMUM_COLOR_VALUE);
+}
+
+/* Helper functions for getting colored points from the stb_image */
+int Get_Red(int x, int y)
+{
+	return (y * IMAGE_X * 3) + x * 3;
+}
+int Get_Green(int x, int y)
+{
+	return Get_Red(x,y) + 1;
+}
+int Get_Blue(int x, int y)
+{
+	return Get_Red(x,y) + 2;
+}
+
+/* Standard selection sort algorithm for sorting the cities by city number */
+void Selection_Sort(int cp_number, struct CP_STATE * cpstateDataList)
+{
+	int i, j;
+	unsigned int key;
+	// Sort the data by ID (Selection sort)
+	for (j = 0; j < cp_number; ++j) {
+		key = cpstateDataList[j].id;
+		i = j - 1;
+		while (i >= 0 && cpstateDataList[i].id > key) {
+			cpstateDataList[i + 1].id = cpstateDataList[i].id;
+			i = i - 1;
+		}
+		cpstateDataList[i + 1].id = key;
+		cpstateDataList[i + 1].owner = cpstateDataList[j].owner;
+		cpstateDataList[i + 1].controller = cpstateDataList[j].controller;
+	}
+}
+
+int Append_To_Xml(const char * xml_filename, struct CP_STATE * cp_data, int cp_state_num)
+{
+#ifdef XML_OUTPUT
 	FILE * xml_file;
 	int i;
 	// For printing the time
@@ -374,10 +495,10 @@ int append_to_xml(char * xml_filename, struct CP_STATE * cp_data, int cp_state_n
 	// MXML Nodes, for creating the xml document
 	mxml_node_t * cpstates;
 	mxml_node_t * generated;
-	mxml_node_t * description;
-	mxml_node_t * defaults;
-	mxml_node_t * def;
-	mxml_node_t * cp;
+ 	mxml_node_t * description;
+ 	mxml_node_t * defaults;
+ 	mxml_node_t * def;
+ 	mxml_node_t * cp;
 
 	// Get the time
 	time(&cur_time);
@@ -398,7 +519,7 @@ int append_to_xml(char * xml_filename, struct CP_STATE * cp_data, int cp_state_n
 	// <generated date="[year]-[month]-[day] [24-hour hour]:[minute]:[second]" timestamp="[current linux timestamp]"/>
 	generated = mxmlNewElement(cpstates, "generated");
 	mxmlElementSetAttrf(generated, "date", "%s", time_str);
-	mxmlElementSetAttrf(generated, "timestamp", "%d", cur_time);
+	mxmlElementSetAttrf(generated, "timestamp", "%ld", (unsigned long)cur_time);
 	// <description>
 	// 	City-only list of *non-default* CP states
 	// </description>
@@ -414,8 +535,7 @@ int append_to_xml(char * xml_filename, struct CP_STATE * cp_data, int cp_state_n
 
 	// Now, to loop through the CP_STATE struct for the dynamic data
 	// <cp id="##" owner="##" controller="##" />
-	for(i = 0; i < cp_state_num; i++)
-	{
+	for (i = 0; i < cp_state_num; ++i) {
 		cp = mxmlNewElement(cpstates, "cp");
 		mxmlElementSetAttrf(cp, "id", "%u", cp_data[i].id);
 		mxmlElementSetAttrf(cp, "owner", "%hu", cp_data[i].owner);
@@ -424,44 +544,77 @@ int append_to_xml(char * xml_filename, struct CP_STATE * cp_data, int cp_state_n
 	
 	// MXML handles the rest! Pretty nifty.
 
-	// Open the file for writing
+	// Write the data to file
 	xml_file = fopen(xml_filename, "w");
-    
-	// Save the XML to the file
 	mxmlSaveFile(cpstates, xml_file, MXML_NO_CALLBACK);
-    
-	// Close the file pointer
 	fclose(xml_file);
 
-	// Free the memory from the nodes
+	// Clean up memory
 	mxmlRelease(cpstates);
 
 	return 0;
+#else // ifndef XML_OUTPUT
+	return 1;
+#endif // XML_OUTPUT
+}
+
+int Append_To_Json(char * json_filename, struct CP_STATE * cp_data, int cp_state_num)
+{
+#ifdef JSON_OUTPUT
+	json_object *my_root, *my_array, *cp_entry;
+
+	// Create root object.
+	my_root = json_object_new_object();
+	// Add version information to root object.
+	json_object_object_add(my_root, "ver", json_object_new_string("1.3"));
+	// Generate enormous "data" hash key array.
+	my_array = json_object_new_array();
+	for (int i = 0; i < cp_state_num; ++i) {
+		cp_entry = json_object_new_object();
+		json_object_object_add(cp_entry, "id", json_object_new_int(cp_data[i].id));
+		json_object_object_add(cp_entry, "owner", json_object_new_int(cp_data[i].owner));
+		json_object_object_add(cp_entry, "controller", json_object_new_int(cp_data[i].controller));
+		json_object_object_add(cp_entry, "contested", json_object_new_string(cp_data[i].contested ? "y" : "n"));
+		json_object_array_add(my_array, cp_entry);
+		//json_object_put(cp_entry);
+	}
+	DPRINTF("Finished adding in JSON array.\n");
+	json_object_object_add(my_root, "data", my_array);
+	//json_object_put(my_array);
+	DPRINTF("Trying to print to file...\n");
+	json_object_to_file(json_filename, my_root);
+	DPRINTF("Print successful.\n");
+	
+	//json_object_put(my_array);
+	json_object_put(my_root);
+
+	return 0;
+#else // #ifndef JSON_OUTPUT
+	return 1;
+#endif // JSON_OUTPUT
 }
 
 // DEBUG - Prints out all the values from a loaded image (creates a very large file).
-int test_image_data(uchar ** image_data)
+int Test_Image_Data(uchar ** imageData)
 {
 	int x,y,i;
-	for(i = 0; i < IMAGE_NUM; i++)
-		for(x = 0; x < IMAGE_X; x++)
-			for(y = 0; y < IMAGE_Y; y++)
-				printf("%d{%d,%d}: {%u,%u,%u}\n",i,x,y,(image_data[i])[R(x,y,IMAGE_Y)], (image_data[i])[G(x,y,IMAGE_Y)], (image_data[i])[B(x,y,IMAGE_Y)]);
+	for (i = 0; i < IMAGE_NUM; ++i)
+		for (x = 0; x < IMAGE_X; ++x)
+			for (y = 0; y < IMAGE_Y; ++y)
+				printf("%d{%d,%d}: {%u,%u,%u}\n",i,x,y,(imageData[i])[Get_Red(x,y)], (imageData[i])[Get_Green(x,y)], (imageData[i])[Get_Blue(x,y)]);
 	
 	return 0;
 }
 
 // DEBUG - Creates a fake image with predicatable and overflowing values for testing purposes.
-int fake_image(uchar ** image, int i)
+int Fake_Image(uchar ** image, int i)
 {
-	int x,y,j;
-	for(x = 0; x < IMAGE_X; x++)
-	{
-		for(y = 0; y < IMAGE_Y; y++)
-		{
-			(image[i])[R(x,y,IMAGE_Y)] = (uchar) x;
-			(image[i])[G(x,y,IMAGE_Y)] = (uchar) y;
-			(image[i])[B(x,y,IMAGE_Y)] = (uchar) ((x*y) % 255);
+	int x,y;
+	for (x = 0; x < IMAGE_X; ++x) {
+		for (y = 0; y < IMAGE_Y; ++y) {
+			(image[i])[Get_Red(x,y)] = (uchar) x;
+			(image[i])[Get_Green(x,y)] = (uchar) y;
+			(image[i])[Get_Blue(x,y)] = (uchar) ((x*y) % 255);
 		}
 	}
 	return 0;
