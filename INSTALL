@@ -2,12 +2,22 @@
 Prerequisites
 -------------
 Current Prerequisites:
-	-> Mini-XML (for XML file writing; not included)
-	-> stb_image (for image processing; source included)
-	-> bash shell with 'sed' and 'wget'
+Used in Scripts:
+ -> cURL (for downloading HTML data)
+ -> grep (for parsing out useful data)
+Dynamically Linked (Have to download yourself): 
+ -> Mini-XML (for XML file writing)
+ -> cURL (for downloading images)
+ -> json-c (for JSON file writing)
+Statically Linked (Included):
+ -> stb_image (for image processing)
 
 ----------
 How to Run
 ----------
+Compile:
 make
-./scripts/webtap.sh
+Update Data (first time only):
+./scripts/update_html_data_file.sh
+To Run:
+./webtap

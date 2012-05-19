@@ -1,51 +1,21 @@
 -------
 Purpose
 -------
-A script pulls images from the website www.battlegroundeurope.com depicting the gamestate of World War II Online. The program then imports and analyses the images to determine which cities are held by which side. The program then outputs this data into a XML format similar to that of the "Wiretap" API. A script then moves that data into some folder accessible through a website, i.e. the "expose" folder. 
-
-This particular utility is being written because the current Wiretap API has a tendancy to be a bit unstable, rendering tools that depend on its data worthless. Hopefully, I can utilize data that is somehow connected to the map at a lower level (images on the main page) to give the tools some data to work with.
+This program mimics certain files from the Wiretap API for the Battleground Europe (BGE) MMOFPS by analyzing color data from pictures on the main BGE website. Hopefully, the mimicked data will allow programs that use the Wiretap API to display basic gamestate information even when the Wiretap API is down (which occurs fairly often).
 
 Current Limitations:
-	-> Can only parse the image one way.
-	-> Can only export to one format.
-	-> Requires a bash script using sed to download the images and parse some
-       of the metadata.
-	-> No configuration for deployment or installation.
-	-> Very little error checking.
-	-> The file is written in ANSI C, so the program is written procedurally
-	   using structures for data.
-	-> No testing.
+ -> Can only export to two formats (XML/JSON).
+ -> Limited configuration for deployment or installation.
+ -> Very little error checking.
+ -> No testing.
 
 ------------
 Future Plans
 ------------
-Since I've been actively reading such excellent books as "The Pragmatic Programmer", "Design Patterns", "Refactoring", etc. I've been trying to improve my effectiveness as a programmer. The original implementation of this program was written before I touched any programming books; hence, why 1) It's written poorly in a simple language (C)*, and 2) I'd like to improve upon it significantly.
-
-*Note: If there's any confusion, C is an awesome language. I just suck at it.
-
-Future Plans:
-	-> Rewrite in a language I haven't learned yet.
-		-> Java? Python? C#? Ruby? Javascript?
-	-> Employ unit testing.
-		-> While this is a small project, I could use the practice.
-	-> Self-contained program (other than the hosting portion [node.js?])
-		-> The original implementation requires a bash script using sed,
-		   wget, and some tricks to update some of the data.
-		   I can probably compress all that into one program.
-	-> Ability to easily switch between output file format.
-		-> Only does non-queryable XML currently; Wiretap has a 
-		   queryable javascript and XML interface.
-	-> Improved error handling.
-		-> Since I'm trying to improve upon the reliability of a current
-		   tool, error handling is kind of important.
-
---------
-About Me
---------
-Name: Trevor Rice
-Age: 23
-I'm a Chemical Engineer by degree turned developer for a chemical engineering simulation software company. I just graduated college this year ('11) and I'm learning as much as I can about more good programming techniques/how not to be stupid.
-
-I haven't done any public work up until now (I wouldn't really call this public, but..), mainly due to my personal fear that I'm not a very good programmer (it's true), so I'm using this opportunity to design a minor tool for a game I've been playing and work on my coding skills at the same time.
-
-Hopefully this receives a bit of public scrutiny (feedback is welcomed!).
+ -> Rewrite in a language I haven't learned yet.
+  -> Java? Python? C#? Ruby? Javascript?
+ -> Employ unit testing?
+  -> While this is a small project, I could use the practice.
+ -> Improved error handling.
+  -> Since I'm trying to improve upon the reliability of a current
+        tool, error handling is kind of important.
